@@ -71,22 +71,36 @@ function mul_mds_matrix(state, M) {
 
 exports.createHasher = (t, nRoundsF, nRoundsP, personaC, personaM, seed) => {
   assert(nRoundsF % 2 == 0);
-  const C = exports.genConstants(personaC, seed, (nRoundsF + nRoundsP) * t);
+  const nRounds = nRoundsF + nRoundsP;
+  const C = exports.genConstants(personaC, seed, nRounds * t);
   const M = exports.genMatrix(personaM, seed, t);
   return function (inputs) {
     let state = [];
     assert(inputs.length <= t);
     for (let i = 0; i < inputs.length; i++) state[i] = F.e(inputs[i]);
     for (let i = inputs.length; i < t; i++) state[i] = F.zero;
-    for (let i = 0; i < nRoundsF + nRoundsP; i++) {
+    for (let i = 0; i < nRounds; i++) {
       arc(state, C.slice(i * t, (i + 1) * t));
       if (i < nRoundsF / 2 || i >= nRoundsF / 2 + nRoundsP) {
         for (let j = 0; j < t; j++) state[j] = sbox(state[j]);
       } else {
         state[0] = sbox(state[0]);
       }
-      mul_mds_matrix(state, M);
+      if (i != nRounds - 1) mul_mds_matrix(state, M);
     }
     return F.normalize(state[0]);
   };
 };
+
+const seed = Buffer.from('');
+const personC = Buffer.from('drlnhdsc');
+const personM = Buffer.from('drlnhdsm');
+const hasher = this.createHasher(3, 8, 55, personC, personM, seed);
+assert(
+  F.eq(
+    Scalar.fromString(
+      '0x029e7a7ffff6e83f2f30571b824908e9b409fed1bbf19395343672bdd46c5a26',
+    ),
+    hasher([0]),
+  ),
+);
