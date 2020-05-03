@@ -105,8 +105,8 @@ exports.createHasher = (t, nRoundsF, nRoundsP, personaC, personaM, seed) => {
 	};
 };
 
-// const seed = Buffer.from('');
-// const personC = Buffer.from('drlnhdsc');
-// const personM = Buffer.from('drlnhdsm');
-// const { hasher } = this.createHasher(3, 8, 55, personC, personM, seed);
-// assert(F.eq(Scalar.fromString('0x029e7a7ffff6e83f2f30571b824908e9b409fed1bbf19395343672bdd46c5a26'), hasher([0])));
+const seed = Buffer.from('');
+const personC = Buffer.from('drlnhdsc');
+const personM = Buffer.from('drlnhdsm');
+const { hasher } = this.createHasher(3, 8, 55, personC, personM, seed);
+assert(F.eq(Scalar.fromString('0x2ff267fd23782a5625e6d804f0a7fa700b8dc6084e2e7a5aff7cd4b1c506d30b'), hasher([0])));
