@@ -84,9 +84,12 @@ mstore(add(pos, 64), M2)
 mstore(add(pos, 96), M3)
 mstore(add(pos, 128), M4)
 mstore(add(pos, 160), M5)
+
 // mstore(add(pos, 192), M6)
 // mstore(add(pos, 224), M7)
 // mstore(add(pos, 256), M8)
+
+// use stack intensively
 let m6 := M6
 let m7 := M7
 let m8 := M8
