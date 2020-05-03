@@ -3,12 +3,13 @@
   "version": "0.0.1",
   "description": "RLN membership contracts",
   "author": "Onur Kılıç",
+  "scripts": {
+    "ganache": "npx ganache-cli -l 10000000"
+  },
   "devDependencies": {
-    "@openzeppelin/test-environment": "^0.1.4",
     "@openzeppelin/test-helpers": "^0.5.5",
     "chai": "^4.2.0",
     "ganache-cli": "^6.9.1",
-    "mocha": "^7.1.1",
     "prettier": "^2.0.4",
     "prettier-plugin-solidity": "^1.0.0-alpha.42"
   }
