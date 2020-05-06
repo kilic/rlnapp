@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    "outDir": "lib/",
+    "rootDir": ".",
+    "declaration": true,
+    "declarationDir": "lib/",
+    "noImplicitAny": false
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./test/**/*.ts",
+  ],
+  "exclude": [
+    "node_modules",
+    "lib"
+  ]
+}
