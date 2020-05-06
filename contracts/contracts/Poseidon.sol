@@ -1,4 +1,4 @@
-pragma solidity 0.6.4;
+pragma solidity 0.6.7;
 
 
 contract Poseidon {
@@ -85,8 +85,8 @@ contract Poseidon {
 			mstore(add(pos, 64), M2)
 			mstore(add(pos, 96), M3)
 			mstore(add(pos, 128), M4)
-			mstore(add(pos, 160), M5)
 
+			// mstore(add(pos, 160), M5)
 			// mstore(add(pos, 192), M6)
 			// mstore(add(pos, 224), M7)
 			// mstore(add(pos, 256), M8)
