@@ -1,8 +1,8 @@
 {
   "name": "@rln/contracts",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "RLN membership contracts",
-  "author": "Onur Kılıç",
+  "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
   "scripts": {
     "ganache": "npx ganache-cli -l 10000000"
   },

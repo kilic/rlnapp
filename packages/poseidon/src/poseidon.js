@@ -8,6 +8,7 @@ const assert = require('assert');
 
 FIELD_ORDER = Scalar.fromString('21888242871839275222246405745257275088548364400416034343698204186575808495617');
 F = new ZqField(FIELD_ORDER);
+exports.field = F;
 
 hasherInit = blakejs.blake2sInit;
 hasherUpdate = blakejs.blake2sUpdate;
@@ -74,8 +75,8 @@ function setup(t, nRoundsF, nRoundsP, personaC, personaM, seed) {
 
 exports.createHasher = (t, nRoundsF, nRoundsP, personaC, personaM, seed) => {
 	if (typeof seed === 'undefined') seed = Buffer.from('');
-	if (typeof personaC === 'undefined') personaC = Buffer.from('hades__c');
-	if (typeof personaM === 'undefined') personaM = Buffer.from('hades__m');
+	if (typeof personaC === 'undefined') personaC = Buffer.from('drlnhdsc');
+	if (typeof personaM === 'undefined') personaM = Buffer.from('drlnhdsm');
 	if (typeof t === 'undefined') t = 3;
 	if (typeof nRoundsF === 'undefined') nRoundsF = 8;
 	if (typeof nRoundsP === 'undefined') nRoundsP = 55;
@@ -104,9 +105,3 @@ exports.createHasher = (t, nRoundsF, nRoundsP, personaC, personaM, seed) => {
 		M
 	};
 };
-
-const seed = Buffer.from('');
-const personC = Buffer.from('drlnhdsc');
-const personM = Buffer.from('drlnhdsm');
-const { hasher } = this.createHasher(3, 8, 55, personC, personM, seed);
-assert(F.eq(Scalar.fromString('0x2ff267fd23782a5625e6d804f0a7fa700b8dc6084e2e7a5aff7cd4b1c506d30b'), hasher([0])));

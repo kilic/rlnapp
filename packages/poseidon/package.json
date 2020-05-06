@@ -1,0 +1,15 @@
+{
+  "name": "@rln/poseidon",
+  "version": "0.1.0",
+  "description": "Poseidon hash function and evm exporter",
+  "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
+  "main": "index.js",
+  "dependencies": {
+    "blakejs": "^1.1.0",
+    "ffjavascript": "^0.1.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^7.1.2"
+  }
+}
