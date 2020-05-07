@@ -7,12 +7,12 @@ contract('Poseidon Hasher', () => {
 	});
 
 	it('Expected result', async () => {
-		const expected = '11c140edb3a166c1f0677f4918618dfe5fd1ee02217bdd0f0caccdc01f6c617';
+		const expected = '2ff267fd23782a5625e6d804f0a7fa700b8dc6084e2e7a5aff7cd4b1c506d30b';
 		const result = await poseidon.test([0, 0]);
 		assert.equal(result.toString(16), expected);
 	});
 
-	it('Gas const', async () => {
+	it('Gas cost', async () => {
 		const gasCost = await poseidon.poseidonGasCost.call();
 		console.log('poseidon hash gas costs:', gasCost.toNumber());
 	});
