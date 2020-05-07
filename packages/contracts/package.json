@@ -4,10 +4,13 @@
   "description": "RLN membership contracts",
   "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
   "scripts": {
-    "ganache": "npx ganache-cli -l 10000000"
+    "compile": "truffle compile",
+    "ganache": "npx ganache-cli -l 10000000",
+    "test": "truffle test"
   },
   "devDependencies": {
     "@openzeppelin/test-helpers": "^0.5.5",
+    "@rln/tree": "0.1.0",
     "chai": "^4.2.0",
     "ganache-cli": "^6.9.1",
     "prettier": "^2.0.4",
