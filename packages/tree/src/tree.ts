@@ -19,7 +19,7 @@ function log2(M: number): number {
 }
 
 export class Tree {
-	private readonly zeros: Array<Node>;
+	public readonly zeros: Array<Node>;
 	private readonly tree: Array<Level> = [];
 	private readonly hasher: Hasher;
 	private readonly depth: number;
@@ -87,70 +87,21 @@ export class Tree {
 		return 0;
 	}
 
-	// public updateWithTree(offset: number, tree: Tree): Success {
-	// 	return 0;
-	// }
-
-	// public insertBatch(offset: number, dataBatch: Array<Data>): Success {
-	// 	const M = dataBatch.length;
-	// 	if (M == 0) return -1;
-	// 	if (((M - 1) & M) != 0) return -2;
-	// 	if (M > this.setSize) return -3;
-	// 	if (offset % M != 0) return -4;
-	// 	if (offset >= this.setSize) return -5;
-
-	// 	let depth = 0;
-	// 	let m = M;
-	// 	for (let i = 1; ; i++) {
-	// 		// depth = log2(M)
-	// 		m = m >> 1;
-	// 		if ((m & 1) == 1) {
-	// 			depth = i;
-	// 			break;
-	// 		}
-	// 	}
-
-	// 	// unseccesful if targets non zero node
-	// 	if (!this.isZero(this.depth - depth, offset >> (M - 1))) return -6;
-
-	// 	// make dense merkle
-	// 	// calculate leafs
-	// 	const leafBatch = dataBatch.map((data) => this.hasher.hash(data));
-	// 	// update leafs
-	// 	for (let i = 0; i < M; i++) {
-	// 		this.tree[this.depth][offset + i] = leafBatch[i];
-	// 	}
-	// 	// ascend dense merkle tree
-	// 	m = M;
-	// 	let offsetAscending = offset;
-	// 	for (let i = 0; i < depth; i++) {
-	// 		for (let j = 0; j < 1 << (depth - i); j += 2) {
-	// 			let leafIndex = offsetAscending + j;
-	// 			const level = this.depth - i;
-	// 			const n = this.hashCouple(this.depth - i, leafIndex);
-	// 			leafIndex >>= 1;
-	// 			this.tree[level - 1][leafIndex] = n;
-	// 		}
-	// 		offsetAscending >>= 1;
-	// 		m -= 1;
-	// 	}
-	// 	this.ascend(this.depth - depth, offsetAscending);
-	// 	return 0;
-	// }
+	public witness(index: number, level: number = this.depth): Array<Node> {
+		const witness = Array(level);
+		let nodeIndex = index;
+		for (let i = level; i >= 0; i--) {
+			nodeIndex ^= 1;
+			witness[i] = this.getNode(i, nodeIndex);
+			nodeIndex >>= 1;
+		}
+		return witness;
+	}
 
 	private doUpdate(leafIndex: number, leaf: Node) {
 		this.tree[this.depth][leafIndex] = leaf;
 		this.ascend(this.depth, leafIndex);
 	}
-
-	private ascend(from: number, leafIndex: number) {
-		for (let level = from; level > 0; level--) {
-			const n = this.hashCouple(level, leafIndex);
-			leafIndex >>= 1;
-			this.tree[level - 1][leafIndex] = n;
-		}
-	}
-
 	private doUpdateBatch(offset: number, depth: number, length: number) {
 		let m = length;
 		let offsetAscending = offset;
@@ -167,6 +118,14 @@ export class Tree {
 		}
 		this.ascend(this.depth - depth, offsetAscending);
 		return 0;
+	}
+
+	private ascend(from: number, leafIndex: number) {
+		for (let level = from; level > 0; level--) {
+			const n = this.hashCouple(level, leafIndex);
+			leafIndex >>= 1;
+			this.tree[level - 1][leafIndex] = n;
+		}
 	}
 
 	private hashCouple(level: number, leafIndex: number) {

@@ -2,6 +2,8 @@ const poseidon = require('@rln/poseidon').poseidon;
 
 export type Node = string;
 
+const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
+
 export interface PoseidonConstructor {
 	t?: number;
 	rf?: number;
@@ -34,7 +36,7 @@ export class Hasher {
 
 	public zeros(depth: number): Array<Node> {
 		const N = depth + 1;
-		const zeros = Array(N).fill('0x00');
+		const zeros = Array(N).fill(ZERO);
 		for (let i = 1; i < N; i++) {
 			zeros[N - 1 - i] = this.hash2(zeros[N - i], zeros[N - i]);
 		}
