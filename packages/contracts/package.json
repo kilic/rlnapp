@@ -5,7 +5,7 @@
   "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
   "scripts": {
     "compile": "truffle compile",
-    "ganache": "npx ganache-cli -l 10000000",
+    "ganache": "npx ganache-cli -d -l 10000000",
     "test": "truffle test"
   },
   "devDependencies": {

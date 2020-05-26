@@ -38,8 +38,8 @@ contract RLN is Poseidon {
 
 	function _register(uint256 pubkey) internal {
 		members[leafIndex] = pubkey;
-		leafIndex += 1;
 		emit MemberRegistered(pubkey, leafIndex);
+		leafIndex += 1;
 	}
 
 	function withdrawBatch(uint256[] calldata preimages, uint256[] calldata leafIndexes, address payable[] calldata receivers) external payable {
