@@ -7,17 +7,22 @@
   "types": "lib/src/index.d.ts",
   "scripts": {
     "build": "tsc -b",
-    "test": "tsc -b && mocha test lib/test//*.js"
+    "clear": "rm -rf lib",
+    "test": "tsc -b && mocha test lib/test//*.js",
+    "generate_contract_wrappers": "typechain --target ethers-v4 --outDir src/generated_contract_wrappers/ ../contracts/build/contracts/RLN.json"
   },
   "dependencies": {
     "@rln/poseidon": "0.1.0",
+    "ethers": "^4.0.47",
     "ffjavascript": "^0.1.3"
   },
   "devDependencies": {
+    "@typechain/ethers-v4": "^1.0.0",
     "@types/chai": "^4.2.11",
     "@types/mocha": "^7.0.2",
     "chai": "^4.2.0",
     "mocha": "^7.1.2",
+    "typechain": "^2.0.0",
     "typescript": "^3.8.3"
   }
 }

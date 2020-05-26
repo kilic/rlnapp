@@ -17,6 +17,7 @@ type HF = (input: string[]) => any;
 
 export class Hasher {
 	private hf: HF;
+	public readonly identity: string;
 
 	public static new(constructor: PoseidonConstructor): Hasher {
 		const { hasher } = poseidon.createHasher(...Object.values(constructor));
@@ -25,11 +26,13 @@ export class Hasher {
 
 	constructor(hf: HF) {
 		this.hf = hf;
+		this.identity = this.hf(['0x00']);
 	}
 
 	public hash(x0: string) {
 		return '0x' + this.hf([x0]).toString(16);
 	}
+
 	public hash2(x0: string, x1: string) {
 		return '0x' + this.hf([x0, x1]).toString(16);
 	}
