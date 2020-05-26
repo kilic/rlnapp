@@ -3,12 +3,10 @@ import { Hasher, Tree, Data, Witness } from '../src';
 const assert = chai.assert;
 
 const POSEIDON_PARAMETERS = {}; // use default
+const hasher = Hasher.new(POSEIDON_PARAMETERS);
 
 describe('Merkle Tree', function () {
-	let hasher;
-	before(async () => {
-		hasher = Hasher.new(POSEIDON_PARAMETERS);
-	});
+	before(async () => {});
 	it('initializes with zeros', async () => {
 		assert.equal(Tree.new(3, hasher).root, '0x13fc18037da87a772cd576e98b3e6b503fa1c5025ea003da8e7ea8bbeced270f');
 		assert.equal(Tree.new(32, hasher).root, '0x1fbea75a9b8db0cc611a2419a409f9961cb1a47d8fed6e7069a60d70fbea3e54');
