@@ -4,26 +4,21 @@ type Level = { [node: number]: Node };
 export type Data = string;
 export type Success = number;
 
-function log2(M: number): number {
-	let depth = 0;
-	let m = M;
-	for (let i = 1; ; i++) {
-		// depth = log2(M)
-		m = m >> 1;
-		if ((m & 1) == 1) {
-			depth = i;
-			break;
-		}
-	}
-	return depth;
-}
+export type Witness = {
+	path: Array<boolean>;
+	nodes: Array<Node>;
+	leaf: Node;
+	index: number;
+	data?: Data;
+	depth?: number;
+};
 
 export class Tree {
 	public readonly zeros: Array<Node>;
+	public readonly depth: number;
+	public readonly setSize: number;
 	private readonly tree: Array<Level> = [];
 	private readonly hasher: Hasher;
-	private readonly depth: number;
-	private readonly setSize: number;
 
 	public static new(depth: number, hasher?: Hasher): Tree {
 		return new Tree(depth, hasher || Hasher.new({}));
@@ -44,97 +39,121 @@ export class Tree {
 		return this.tree[0][0] || this.zeros[0];
 	}
 
-	public insert(leafIndex: number, data: Data): Success {
-		if (leafIndex >= this.setSize) {
-			return -1;
-		}
-		this.doUpdate(leafIndex, this.hasher.hash(data));
-		return 0;
-	}
-
-	public update(leafIndex: number, leaf: Node): Success {
-		if (leafIndex >= this.setSize) {
-			return -1;
-		}
-		this.doUpdate(leafIndex, leaf);
-		return 0;
-	}
-
-	public insertBatch(offset: number, dataBatch: Array<Data>): Success {
-		const depth = log2(dataBatch.length);
-		const check = this.checkBatch(offset, depth, dataBatch.length);
-		if (check != 0) {
-			return check;
-		}
-		const leafBatch = dataBatch.map((data) => this.hasher.hash(data));
-		for (let i = 0; i < dataBatch.length; i++) {
-			this.tree[this.depth][offset + i] = leafBatch[i];
-		}
-		this.doUpdateBatch(offset, depth, dataBatch.length);
-		return 0;
-	}
-
-	public updateBatch(offset: number, leafBatch: Array<Node>): Success {
-		const depth = log2(leafBatch.length);
-		const check = this.checkBatch(offset, depth, leafBatch.length);
-		if (check != 0) {
-			return check;
-		}
-		for (let i = 0; i < leafBatch.length; i++) {
-			this.tree[this.depth][offset + i] = leafBatch[i];
-		}
-		this.doUpdateBatch(offset, depth, leafBatch.length);
-		return 0;
-	}
-
-	public witness(index: number, level: number = this.depth): Array<Node> {
-		const witness = Array(level);
+	public witness(index: number, depth: number = this.depth): Witness {
+		const path = Array<boolean>(depth);
+		const nodes = Array<Node>(depth);
 		let nodeIndex = index;
-		for (let i = level; i >= 0; i--) {
+		const leaf = this.getNode(depth, nodeIndex);
+		for (let i = 0; i < depth; i++) {
 			nodeIndex ^= 1;
-			witness[i] = this.getNode(i, nodeIndex);
+			nodes[i] = this.getNode(depth - i, nodeIndex);
+			path[i] = (nodeIndex & 1) == 1;
 			nodeIndex >>= 1;
 		}
-		return witness;
+		return { path, nodes, leaf, index, depth };
 	}
 
-	private doUpdate(leafIndex: number, leaf: Node) {
-		this.tree[this.depth][leafIndex] = leaf;
-		this.ascend(this.depth, leafIndex);
-	}
-	private doUpdateBatch(offset: number, depth: number, length: number) {
-		let m = length;
-		let offsetAscending = offset;
-		for (let i = 0; i < depth; i++) {
-			for (let j = 0; j < 1 << (depth - i); j += 2) {
-				let leafIndex = offsetAscending + j;
-				const level = this.depth - i;
-				const n = this.hashCouple(this.depth - i, leafIndex);
-				leafIndex >>= 1;
-				this.tree[level - 1][leafIndex] = n;
-			}
-			offsetAscending >>= 1;
-			m -= 1;
+	public chekcInclusion(witness: Witness): Success {
+		// we check the form of witness data rather than looking up for the leaf
+		if (witness.nodes.length == 0) return -2;
+		if (witness.nodes.length != witness.path.length) return -3;
+		const data = witness.data;
+		if (data) {
+			if (witness.nodes.length != this.depth) return -4;
+			if (this.hasher.hash(data) != witness.leaf) return -5;
 		}
-		this.ascend(this.depth - depth, offsetAscending);
+		let depth = witness.depth;
+		if (!depth) {
+			depth = this.depth;
+		}
+		let acc = witness.leaf;
+		for (let i = 0; i < depth; i++) {
+			const node = witness.nodes[i];
+			if (witness.path[i]) {
+				acc = this.hasher.hash2(acc, node);
+			} else {
+				acc = this.hasher.hash2(node, acc);
+			}
+		}
+		return acc == this.root ? 0 : -1;
+	}
+
+	// insert updates tree with a single raw data at given index
+	public insertSingle(leafIndex: number, data: Data): Success {
+		if (leafIndex >= this.setSize) {
+			return -1;
+		}
+		this.tree[this.depth][leafIndex] = this.hasher.hash(data);
+		this.ascend(leafIndex, 1);
 		return 0;
 	}
 
-	private ascend(from: number, leafIndex: number) {
-		for (let level = from; level > 0; level--) {
-			const n = this.hashCouple(level, leafIndex);
-			leafIndex >>= 1;
-			this.tree[level - 1][leafIndex] = n;
+	// update updates tree with a leaf at given index
+	public updateSingle(leafIndex: number, leaf: Node): Success {
+		if (leafIndex >= this.setSize) {
+			return -1;
 		}
+		this.tree[this.depth][leafIndex] = leaf;
+		this.ascend(leafIndex, 1);
+		return 0;
+	}
+
+	// insertBatch given multiple raw data updates tree ascending from an offset
+	public insertBatch(offset: number, data: Array<Data>): Success {
+		const len = data.length;
+		if (len == 0) return -1;
+		if (len + offset > this.setSize) return -2;
+		for (let i = 0; i < len; i++) {
+			this.tree[this.depth][offset + i] = this.hasher.hash(data[i]);
+		}
+		this.ascend(offset, len);
+		return 0;
+	}
+
+	// insertBatch given multiple raw data updates tree ascending from an offset
+	public updateBatch(offset: number, data: Array<Node>): Success {
+		const len = data.length;
+		if (len == 0) return -1;
+		if (len + offset > this.setSize) return -2;
+		for (let i = 0; i < len; i++) {
+			this.tree[this.depth][offset + i] = data[i];
+		}
+		this.ascend(offset, len);
+		return 0;
+	}
+
+	private ascend(offset: number, len: number) {
+		for (let level = this.depth; level > 0; level--) {
+			if (offset & 1) {
+				offset -= 1;
+				len += 1;
+			}
+			if (len & 1) {
+				len += 1;
+			}
+			for (let node = offset; node < offset + len; node += 2) {
+				this.updateCouple(level, node);
+			}
+			offset >>= 1;
+			len >>= 1;
+		}
+	}
+
+	private updateCouple(level: number, leafIndex: number) {
+		const n = this.hashCouple(level, leafIndex);
+		// console.log('U', level - 1, leafIndex >> 1);
+		this.tree[level - 1][leafIndex >> 1] = n;
 	}
 
 	private hashCouple(level: number, leafIndex: number) {
 		const X = this.getCouple(level, leafIndex);
+		// console.log('data', X.l, X.r);
 		return this.hasher.hash2(X.l, X.r);
 	}
 
 	private getCouple(level: number, index: number): { l: Node; r: Node } {
 		index = index & ~1;
+		// console.log('H', level, index, index + 1);
 		return {
 			l: this.getNode(level, index),
 			r: this.getNode(level, index + 1)
@@ -147,17 +166,5 @@ export class Tree {
 
 	private isZero(level: number, leafIndex: number): boolean {
 		return this.zeros[level] == this.getNode(level, leafIndex);
-	}
-
-	private checkBatch(offset: number, depth: number, length: number): Success {
-		const M = length;
-		if (M == 0) return -1;
-		if (((M - 1) & M) != 0) return -2;
-		if (M > this.setSize) return -3;
-		if (offset % M != 0) return -4;
-		if (offset >= this.setSize) return -5;
-		if (1 << depth != length) return -6;
-		if (!this.isZero(this.depth - depth, offset >> (M - 1))) return -7;
-		return 0;
 	}
 }
