@@ -3,3 +3,5 @@ yarn.lock
 *.log
 build
 lib
+generated
+generated*
