@@ -141,19 +141,16 @@ export class Tree {
 
 	private updateCouple(level: number, leafIndex: number) {
 		const n = this.hashCouple(level, leafIndex);
-		// console.log('U', level - 1, leafIndex >> 1);
 		this.tree[level - 1][leafIndex >> 1] = n;
 	}
 
 	private hashCouple(level: number, leafIndex: number) {
 		const X = this.getCouple(level, leafIndex);
-		// console.log('data', X.l, X.r);
 		return this.hasher.hash2(X.l, X.r);
 	}
 
 	private getCouple(level: number, index: number): { l: Node; r: Node } {
 		index = index & ~1;
-		// console.log('H', level, index, index + 1);
 		return {
 			l: this.getNode(level, index),
 			r: this.getNode(level, index + 1)
