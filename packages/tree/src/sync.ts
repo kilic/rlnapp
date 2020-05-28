@@ -24,18 +24,56 @@ export class TreeSync {
 		}
 		return new TreeSync(rln, tree, memberSize);
 	}
-
-	constructor(private readonly rln: Rln, private readonly tree: Tree, public memberSize: number) {
-		const filter = rln.filters.MemberRegistered(null, null);
-		rln.on(filter, this.memberRegistered);
+	constructor(private rln: Rln, private readonly tree: Tree, public memberSize: number) {
+		this.listen();
+		// check member size from contract and xyz
 	}
 
 	get root(): string {
 		return this.tree.root;
 	}
 
-	public async forceSync() {
-		this.sync();
+	public async updateProvider(provider: Provider): Promise<number> {
+		this.stopListening();
+		this.rln = this.rln.connect(provider);
+		this.listen();
+		return this.forceSync();
+	}
+
+	public async forceSync(): Promise<number> {
+		try {
+			await this.rln.provider.getNetwork();
+			await this.sync();
+			return 0;
+		} catch (err) {
+			return -1;
+		}
+	}
+
+	private async sync() {
+		const memberSize = (await this.rln.leafIndex()).toNumber();
+		const n = memberSize - this.memberSize;
+		if (n > 0) {
+			const off = this.memberSize;
+			this.memberSize = memberSize;
+			const members = Array<string>(n);
+			for (let i = 0; i < n; i++) {
+				members[i] = (await this.rln.members(i + off)).toHexString();
+			}
+			this.tree.updateBatch(off, members);
+		}
+	}
+
+	private listen() {
+		this.rln.on(this.filter, this.memberRegistered);
+	}
+
+	private stopListening() {
+		this.rln.removeAllListeners(this.filter);
+	}
+
+	private get filter() {
+		return this.rln.filters.MemberRegistered(null, null);
 	}
 
 	private memberRegistered = (pubkey: BigNumber, leafIndex: BigNumber) => {
@@ -51,18 +89,4 @@ export class TreeSync {
 			}
 		}
 	};
-
-	private async sync() {
-		const memberSize = (await this.rln.leafIndex()).toNumber();
-		if (memberSize > this.memberSize) {
-			const members = Array<string>(memberSize);
-			if (memberSize > 0) {
-				for (let i = 0; i < memberSize; i++) {
-					members.push((await this.rln.members(i)).toHexString());
-				}
-				this.tree.updateBatch(0, members);
-				this.memberSize = memberSize;
-			}
-		}
-	}
 }

@@ -21,7 +21,9 @@
     "@types/chai": "^4.2.11",
     "@types/mocha": "^7.0.2",
     "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "mocha": "^7.1.2",
+    "ts-node": "^8.10.1",
     "typechain": "^2.0.0",
     "typescript": "^3.8.3"
   }

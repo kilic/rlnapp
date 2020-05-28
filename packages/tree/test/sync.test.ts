@@ -1,12 +1,15 @@
 import { Hasher, Tree } from '../src';
 import { RlnFactory } from '../src/generated_contract_wrappers/RlnFactory';
-import { wallet, provider } from './provider';
+import { wallet, provider, downProvider } from './provider';
 import { Rln } from '../src/generated_contract_wrappers/Rln';
 import { utils } from 'ethers';
 import { TreeSync } from '../src/sync';
-import * as chai from 'chai';
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+chai.use(chaiAsPromised);
 
 const assert = chai.assert;
+const expect = chai.expect;
 const RLN_FACTORY = new RlnFactory(wallet);
 const POSEIDON_PARAMETERS = {}; // use default
 const HASHER = Hasher.new(POSEIDON_PARAMETERS);
@@ -28,7 +31,7 @@ async function newRln(depth: number): Promise<Rln> {
 }
 
 describe('Tree Sync', function () {
-	it('treesync empty start', async () => {
+	it('start with set empty', async () => {
 		const depth = 32;
 		const referenceTree = Tree.new(depth, HASHER);
 		const rln = await newRln(depth);
@@ -43,9 +46,8 @@ describe('Tree Sync', function () {
 		tx = await rln.register(pubkey1, { value: MEMBERSHIP_FEE });
 		await sleep(1000); // sleep some to treesync gets events
 		assert.equal(referenceTree.root, treesync.root);
-	}).timeout(4000);
-
-	it('treesync boot', async () => {
+	}).timeout(3000);
+	it('boot from scratch', async () => {
 		const depth = 32;
 		const referenceTree = Tree.new(depth, HASHER);
 		const rln = await newRln(depth);
@@ -53,12 +55,45 @@ describe('Tree Sync', function () {
 		const pubkey0 = randPubkey();
 		referenceTree.updateSingle(0, pubkey0);
 		let tx = await rln.register(pubkey0, { value: MEMBERSHIP_FEE });
+		await tx.wait();
 		// register 1
 		const pubkey1 = randPubkey();
 		referenceTree.updateSingle(1, pubkey1);
 		tx = await rln.register(pubkey1, { value: MEMBERSHIP_FEE });
+		await tx.wait();
 		await sleep(1000); // sleep some to treesync gets events
 		const treesync = await TreeSync.new(HASHER, rln.address, provider);
 		assert.equal(referenceTree.root, treesync.root);
-	}).timeout(4000);
+		await sleep(1000); // sleep some to treesync gets events
+		assert.equal(referenceTree.root, treesync.root);
+	}).timeout(3000);
+	it('sync after a disconnection', async () => {
+		const depth = 32;
+		const referenceTree = Tree.new(depth, HASHER);
+		const rln = await newRln(depth);
+		const treesync = await TreeSync.new(HASHER, rln.address, provider);
+		// register two pubkeys
+		const pubkey0 = randPubkey();
+		referenceTree.updateSingle(0, pubkey0);
+		await rln.register(pubkey0, { value: MEMBERSHIP_FEE });
+		const pubkey1 = randPubkey();
+		referenceTree.updateSingle(1, pubkey1);
+		await rln.register(pubkey1, { value: MEMBERSHIP_FEE });
+		await sleep(1000); // sleep some to treesync gets events
+		assert.equal(referenceTree.root, treesync.root);
+		// make treesync to be offline
+		assert.equal(-1, await treesync.updateProvider(downProvider));
+		// register two more pubkeys
+		const pubkey2 = randPubkey();
+		referenceTree.updateSingle(2, pubkey2);
+		let tx = await rln.register(pubkey2, { value: MEMBERSHIP_FEE });
+		await tx.wait();
+		const pubkey3 = randPubkey();
+		referenceTree.updateSingle(3, pubkey3);
+		tx = await rln.register(pubkey3, { value: MEMBERSHIP_FEE });
+		await tx.wait();
+		// make treesync to be online
+		assert.equal(0, await treesync.updateProvider(provider));
+		assert.equal(referenceTree.root, treesync.root);
+	}).timeout(3000);
 });
