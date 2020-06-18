@@ -39,6 +39,22 @@ export class Tree {
 		return this.tree[0][0] || this.zeros[0];
 	}
 
+	public getNode(level: number, index: number): Node {
+		return this.tree[level][index] || this.zeros[level];
+	}
+
+	// witnessForBatch given merging subtree offset and depth constructs a witness
+	public witnessForBatch(mergeOffsetLower: number, subtreeDepth: number): Witness {
+		const mergeSize = 1 << subtreeDepth;
+		const mergeOffsetUpper = mergeOffsetLower + mergeSize;
+		const pathFollower = mergeOffsetLower >> subtreeDepth;
+		if (mergeOffsetLower >> subtreeDepth != (mergeOffsetUpper - 1) >> subtreeDepth) {
+			throw new Error('bad merge alignment');
+		}
+		return this.witness(pathFollower, this.depth - subtreeDepth);
+	}
+
+	// witness given index and depth constructs a witness
 	public witness(index: number, depth: number = this.depth): Witness {
 		const path = Array<boolean>(depth);
 		const nodes = Array<Node>(depth);
@@ -53,7 +69,9 @@ export class Tree {
 		return { path, nodes, leaf, index, depth };
 	}
 
-	public chekcInclusion(witness: Witness): Success {
+	// checkInclusion verifies the given witness.
+	// It performs root calculation rather than just looking up for the leaf or node
+	public checkInclusion(witness: Witness): Success {
 		// we check the form of witness data rather than looking up for the leaf
 		if (witness.nodes.length == 0) return -2;
 		if (witness.nodes.length != witness.path.length) return -3;
@@ -78,7 +96,7 @@ export class Tree {
 		return acc == this.root ? 0 : -1;
 	}
 
-	// insert updates tree with a single raw data at given index
+	// insertSingle updates tree with a single raw data at given index
 	public insertSingle(leafIndex: number, data: Data): Success {
 		if (leafIndex >= this.setSize) {
 			return -1;
@@ -88,7 +106,7 @@ export class Tree {
 		return 0;
 	}
 
-	// update updates tree with a leaf at given index
+	// updateSingle updates tree with a leaf at given index
 	public updateSingle(leafIndex: number, leaf: Node): Success {
 		if (leafIndex >= this.setSize) {
 			return -1;
@@ -110,7 +128,7 @@ export class Tree {
 		return 0;
 	}
 
-	// insertBatch given multiple raw data updates tree ascending from an offset
+	// updateBatch given multiple sequencial data updates tree ascending from an offset
 	public updateBatch(offset: number, data: Array<Node>): Success {
 		const len = data.length;
 		if (len == 0) return -1;
@@ -155,10 +173,6 @@ export class Tree {
 			l: this.getNode(level, index),
 			r: this.getNode(level, index + 1)
 		};
-	}
-
-	private getNode(level: number, index: number): Node {
-		return this.tree[level][index] || this.zeros[level];
 	}
 
 	private isZero(level: number, leafIndex: number): boolean {

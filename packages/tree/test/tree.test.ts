@@ -69,18 +69,36 @@ describe('Merkle Tree', function () {
 			leaf: '0x00',
 			index: 1
 		};
-		assert.equal(0, tree.chekcInclusion(witness));
+		assert.equal(0, tree.checkInclusion(witness));
 		witness.leaf = '0x01';
-		assert.equal(-1, tree.chekcInclusion(witness));
+		assert.equal(-1, tree.checkInclusion(witness));
 		const data = Array<Data>(tree.setSize)
 			.fill('0')
 			.map((_, i) => (i + 1).toString());
 		assert.equal(0, tree.updateBatch(0, data));
 		for (let i = 0; i < tree.setSize; i++) {
 			const witness = tree.witness(i);
-			assert.equal(0, tree.chekcInclusion(witness));
+			assert.equal(0, tree.checkInclusion(witness));
 			witness.leaf = '0x00';
-			assert.equal(-1, tree.chekcInclusion(witness));
+			assert.equal(-1, tree.checkInclusion(witness));
 		}
+	});
+	it('witness for batch merging', async () => {
+		const depth = 8;
+		const tree = Tree.new(depth, hasher);
+		let witness = tree.witnessForBatch(0, 2);
+		assert.equal(0, tree.checkInclusion(witness));
+		let data = Array<Data>(64)
+			.fill('0')
+			.map((_, i) => (i + 1).toString());
+		assert.equal(0, tree.updateBatch(0, data));
+		witness = tree.witnessForBatch(0, 6);
+		assert.equal(0, tree.checkInclusion(witness));
+		data = Array<Data>(16)
+			.fill('0')
+			.map((_, i) => (i + 1).toString());
+		assert.equal(0, tree.updateBatch(64, data));
+		witness = tree.witnessForBatch(64, 4);
+		assert.equal(0, tree.checkInclusion(witness));
 	});
 });

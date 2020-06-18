@@ -1,33 +1,21 @@
 {
   "overrides": [
     {
-      "files": "*.sol",
-      "options": {
-        "printWidth": 1200,
-        "tabWidth": 4,
-        "useTabs": true,
-        "singleQuote": false,
-        "bracketSpacing": true,
-        "explicitTypes": "always",
-        "trailingComma": "none"
-      }
-    },
-    {
-      "files": "*.test.js",
-      "options": {
-        "printWidth": 120,
-        "tabWidth": 4,
-        "useTabs": true,
-        "singleQuote": false,
-        "bracketSpacing": true,
-        "explicitTypes": "always",
-        "trailingComma": "none"
-      }
-    },
-    {
       "files": "*.ts",
       "options": {
-        "printWidth": 120,
+        "printWidth": 320,
+        "tabWidth": 4,
+        "useTabs": true,
+        "singleQuote": true,
+        "bracketSpacing": true,
+        "explicitTypes": "always",
+        "trailingComma": "none"
+      }
+    },
+    {
+      "files": "*.test.ts",
+      "options": {
+        "printWidth": 320,
         "tabWidth": 4,
         "useTabs": true,
         "singleQuote": true,
@@ -38,6 +26,18 @@
     },
     {
       "files": "*.js",
+      "options": {
+        "printWidth": 320,
+        "tabWidth": 4,
+        "useTabs": true,
+        "singleQuote": true,
+        "bracketSpacing": true,
+        "explicitTypes": "always",
+        "trailingComma": "none"
+      }
+    },
+    {
+      "files": "*.test.js",
       "options": {
         "printWidth": 320,
         "tabWidth": 4,

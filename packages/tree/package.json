@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc -b",
     "clear": "rm -rf lib",
-    "test": "tsc -b && mocha test lib/test//*.js",
+    "test": "tsc -b && mocha -r ts-node/register lib/test//*.js",
     "generate_contract_wrappers": "typechain --target ethers-v4 --outDir src/generated_contract_wrappers/ ../contracts/build/contracts/RLN.json"
   },
   "dependencies": {
@@ -23,7 +23,7 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "mocha": "^7.1.2",
-    "ts-node": "^8.10.1",
+    "ts-node": "^8.10.2",
     "typechain": "^2.0.0",
     "typescript": "^3.8.3"
   }
