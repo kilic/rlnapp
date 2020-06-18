@@ -1,4 +1,4 @@
-pragma solidity 0.6.7;
+pragma solidity 0.6.10;
 
 
 contract Poseidon {
@@ -514,7 +514,7 @@ contract Poseidon {
 		}
 	}
 
-	function hasherIdentity() public pure returns (bytes32) {
-		return bytes32(0x2ff267fd23782a5625e6d804f0a7fa700b8dc6084e2e7a5aff7cd4b1c506d30b);
+	function hasherIdentity() public pure returns (uint256) {
+		return 0x2ff267fd23782a5625e6d804f0a7fa700b8dc6084e2e7a5aff7cd4b1c506d30b;
 	}
 }

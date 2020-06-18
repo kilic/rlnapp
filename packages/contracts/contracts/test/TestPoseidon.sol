@@ -1,6 +1,6 @@
-pragma solidity 0.6.7;
+pragma solidity 0.6.10;
 
-import "./Poseidon.sol";
+import '../Poseidon.sol';
 
 
 contract TestPoseidon is Poseidon {
