@@ -18,7 +18,7 @@ Otherwise it means that a proper subtree cannot be constructed with given offset
 
 A closed subtree merges with the previous subtree if height of both subtree are the same. And similarly a merged subtree continiues to  merge with previous subtrees if there exists a subtree with same height.
 
-Closed subtree root hashes are stored on-chain. Notice that there cannot be same level root hashes for different subtrees since the always have to be neightboors and we merge them whenever possible.
+Closed subtree root hashes are stored on-chain. Notice that there cannot be root hashes more that one for æ level since always we merge them whenever possible.
 
 # Persist the top root
 
