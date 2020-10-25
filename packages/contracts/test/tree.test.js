@@ -1,4 +1,7 @@
-const TestTreeContract = artifacts.require("TestTree");
+const TestPoseidonTreeContract = artifacts.require("TestPoseidonTree");
+const TestPoseidonTreeWithQueContract = artifacts.require(
+  "TestPoseidonTreeWithQue"
+);
 const Hasher = require("@rln/tree").Hasher;
 const Tree = require("@rln/tree").Tree;
 const {assert} = require("chai");
@@ -6,13 +9,60 @@ const {assert} = require("chai");
 const hasher = Hasher.new({});
 const utils = web3.utils;
 
-contract("Tree", () => {
+let DEPTH;
+let BATCH_DEPTH;
+
+contract("tree w/o que", () => {
+  let treeLeft;
+  let treeRight;
+  let hasher;
+
+  beforeEach(async () => {
+    treeContract = await TestPoseidonTreeContract.new();
+    DEPTH = (await treeContract.DEPTH()).toNumber();
+    BATCH_DEPTH = (await treeContract.BATCH_DEPTH()).toNumber();
+    treeLeft = Tree.new(DEPTH, hasher);
+    treeRight = Tree.new(DEPTH, hasher);
+    hasher = treeLeft.hasher;
+    zeros = treeLeft.zeros;
+  });
+  it("update single", async () => {
+    for (let i = 0; i < 5; i++) {
+      const leaf = web3.utils.randomHex(16);
+      treeLeft.updateSingle(i, leaf);
+      await treeContract.updateSingle(leaf);
+      assert.equal(treeLeft.root, utils.toHex(await treeContract.rootLeft()));
+      assert.equal(treeRight.root, utils.toHex(await treeContract.rootRight()));
+      const root = hasher.hash2(treeLeft.root, treeRight.root);
+      assert.equal(root, utils.toHex(await treeContract.root()));
+    }
+  });
+  it("update batch", async () => {
+    const batchSize = 1 << BATCH_DEPTH;
+
+    for (let k = 0; k < 4; k++) {
+      let leafs = [];
+      for (let i = 0; i < batchSize; i++) {
+        const leaf = web3.utils.randomHex(16);
+        leafs.push(leaf);
+      }
+      treeRight.updateBatch(batchSize * k, leafs);
+      await treeContract.updateBatch(leafs);
+      assert.equal(treeLeft.root, utils.toHex(await treeContract.rootLeft()));
+      assert.equal(treeRight.root, utils.toHex(await treeContract.rootRight()));
+      const root = hasher.hash2(treeLeft.root, treeRight.root);
+      assert.equal(root, utils.toHex(await treeContract.root()));
+    }
+  });
+});
+
+contract("tree with que", () => {
   let treeContract;
   let tree;
   const minSubtreeDepth = 1;
   beforeEach(async () => {
     tree = Tree.new(32, hasher);
-    treeContract = await TestTreeContract.new(minSubtreeDepth);
+    treeContract = await TestPoseidonTreeWithQueContract.new(minSubtreeDepth);
   });
 
   it("Add que", async () => {

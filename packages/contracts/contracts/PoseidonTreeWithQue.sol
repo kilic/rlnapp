@@ -1,11 +1,11 @@
 pragma solidity 0.6.10;
 
-import './Poseidon.sol';
+import './PoseidonHasher.sol';
 
 
-contract Tree is Poseidon {
+contract PoseidonTreeWithQue is PoseidonHasher {
 	uint256 public constant DEPTH = 32;
-	uint256 public immutable MIN_SUBTREE_DEPTH;
+	uint256 public immutable MIN_SUBPoseidonTree_DEPTH;
 
 	uint256[DEPTH] public ZEROS = [
 		0x2ff267fd23782a5625e6d804f0a7fa700b8dc6084e2e7a5aff7cd4b1c506d30b,
@@ -82,11 +82,11 @@ contract Tree is Poseidon {
 	uint256 public mergeOffsetLower = 0;
 
 	constructor(uint256 minlevel) public {
-		require(hasherIdentity() == ZEROS[0], 'TREE: incompatible hasher');
-		require(DEPTH == filledSubtrees.length, 'TREE: bad tree construction');
-		require(DEPTH == ZEROS.length, 'TREE: bad tree construction');
-		require(minlevel < DEPTH - 1, 'TREE: large subtree depth');
-		MIN_SUBTREE_DEPTH = minlevel;
+		require(identity() == ZEROS[0], 'PoseidonTree: incompatible hasher');
+		require(DEPTH == filledSubtrees.length, 'PoseidonTree: bad tree construction');
+		require(DEPTH == ZEROS.length, 'PoseidonTree: bad tree construction');
+		require(minlevel < DEPTH - 1, 'PoseidonTree: large subtree depth');
+		MIN_SUBPoseidonTree_DEPTH = minlevel;
 		root = ZEROS[DEPTH - 1];
 	}
 
@@ -103,15 +103,15 @@ contract Tree is Poseidon {
 	}
 
 	function merge(uint256 level) internal {
-		require(level >= MIN_SUBTREE_DEPTH && level < DEPTH - 1, 'TREE: subtree depth too low');
+		require(level >= MIN_SUBPoseidonTree_DEPTH && level < DEPTH - 1, 'PoseidonTree: subtree depth too low');
 
 		uint256 mergeSize = 1 << level;
 		uint256 mergeOffsetUpper = mergeOffsetLower + mergeSize;
 		uint256 path = mergeOffsetLower >> level;
 
 		// Check whether valid merge request
-		require(leafIndex - mergeOffsetLower >= mergeSize, 'TREE: subtree set size must be lower or equal than que size');
-		require((mergeOffsetUpper - 1) >> level == path, 'TREE: cannot construct subtree');
+		require(leafIndex - mergeOffsetLower >= mergeSize, 'PoseidonTree: subtree set size must be lower or equal than que size');
+		require((mergeOffsetUpper - 1) >> level == path, 'PoseidonTree: cannot construct subtree');
 
 		uint256[] memory buf = new uint256[](mergeSize / 2);
 
