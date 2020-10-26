@@ -89,11 +89,11 @@ contract RLNInventivized {
 	uint256 public immutable numberOfBlocksForRandomness;
 
 	RLNRegistry registry;
-	mapping(bytes32 => REWARD_STATUS) rewards;
+	mapping(bytes32 => REWARD_STATUS) public rewards;
 
 	// FIX: no need to store old targets
 	// find out a way to store less targets
-	mapping(uint256 => uint256) targets;
+	mapping(uint256 => uint256) public randNumber;
 
 	Snark.VerifyingKey rlnVerifyingKey;
 
@@ -181,7 +181,7 @@ contract RLNInventivized {
 		require(Snark.verify(rlnVerifyingKey, circuitInputs, rlnProof), 'Reward claim: signal verification failed');
 
 		// check if nullifier hits the target
-		require(signal.nullifier < proofOfMessageTarget(rewardEpoch, numberOfMessages), 'Reward claim: proof of message failed');
+		require(proofOfMessageTarget(rewardEpoch, signal.nullifier) > 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff / numberOfMessages, 'Reward claim: proof of message failed');
 
 		// process reward witdrawal
 		applyReward(beneficiary, numberOfMessages);
@@ -189,7 +189,9 @@ contract RLNInventivized {
 		rewards[rewardID] = REWARD_STATUS.Processed;
 	}
 
-	function applyReward(address beneficiary, uint256 numberOfMessages) internal {}
+	function applyReward(address beneficiary, uint256 numberOfMessages) internal {
+		// TODO: source of reward is not clear
+	}
 
 	function rewardID(
 		address beneficiary,
@@ -204,13 +206,13 @@ contract RLNInventivized {
 		return block.number / rewardPeriod + 1;
 	}
 
-	function proofOfMessageTarget(uint256 rewardEpoch, uint256 numberOfMessages) internal returns (uint256) {
-		uint256 target = targets[rewardEpoch];
-		if (target == 0) {
-			target = randomForEpoch(rewardEpoch);
-			targets[rewardEpoch] = target;
+	function proofOfMessageTarget(uint256 rewardEpoch, uint256 nullifier) internal returns (uint256) {
+		uint256 _randNumber = randNumber[rewardEpoch];
+		if (_randNumber == 0) {
+			_randNumber = randomForEpoch(rewardEpoch);
+			randNumber[rewardEpoch] = _randNumber;
 		}
-		return target / numberOfMessages;
+		return (_randNumber * nullifier);
 	}
 
 	function randomForEpoch(uint256 rewardEpoch) internal view returns (uint256) {
