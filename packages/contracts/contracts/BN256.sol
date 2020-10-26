@@ -1,7 +1,7 @@
 pragma solidity 0.6.10;
 
 
-// Mostly taken from. Thanks Wanseob!
+// Mostly taken from
 // https://github.com/zkopru-network/zkopru/tree/develop/packages/contracts/contracts/libraries
 
 library BN256 {

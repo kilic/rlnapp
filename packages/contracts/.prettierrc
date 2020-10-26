@@ -11,6 +11,18 @@
         "explicitTypes": "always",
         "trailingComma": "none"
       }
+    },
+    {
+      "files": "*.js",
+      "options": {
+        "printWidth": 320,
+        "tabWidth": 4,
+        "useTabs": true,
+        "singleQuote": true,
+        "bracketSpacing": true,
+        "explicitTypes": "always",
+        "trailingComma": "none"
+      }
     }
   ]
 }

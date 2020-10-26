@@ -60,41 +60,44 @@ library RLNKeccakMerkleUtils {
 
 contract RLNRegistry is PoseidonTree {
 	// Accept only ETH for now
-	uint256 MEMBERSHIP_FEE;
+	uint256 membershipFee;
 
-	constructor(uint256 membershipFee) public {
-		MEMBERSHIP_FEE = membershipFee;
+	constructor(uint256 _membershipFee) public {
+		membershipFee = _membershipFee;
 	}
 
 	function registerSingle(uint256 newMember) external payable returns (uint256) {
-		require(msg.value == MEMBERSHIP_FEE, 'RLNRegsitry: fee is not sufficient');
+		require(msg.value == membershipFee, 'RLNRegsitry: fee is not sufficient');
 		_updateSingle(newMember);
 	}
 
 	function registerBatch(uint256[BATCH_SIZE] memory newMembers) external payable returns (uint256) {
-		require(msg.value == MEMBERSHIP_FEE * BATCH_SIZE, 'RLNRegsitry: fee is not sufficient');
+		require(msg.value == membershipFee * BATCH_SIZE, 'RLNRegsitry: fee is not sufficient');
 		_updateBatch(newMembers);
 	}
 
-	function isValidMembershipRoot(uint256 membershipRoot) internal returns (bool) {
+	function isValidMembershipRoot(uint256 membershipRoot) external view returns (bool) {
 		return history[membershipRoot];
 	}
 }
 
 
-contract RLNInventivized is RLNRegistry {
-	// FIX: these values should be fed into constructor
-	// FIX: these values should be governed in the end
-	uint256 immutable rewardPeriod = 1000; // blocks
-	uint256 immutable claimPeriod = 1000; // blocks
-	uint256 immutable claimStakeAmount = 1 ether;
-	uint256 numberOfBlocksForRandomness = 10;
+contract RLNInventivized {
+	uint256 public immutable rewardPeriod; // blocks
+	uint256 public immutable claimPeriod; // blocks
+	uint256 public immutable claimStakeAmount = 1 ether;
+	uint256 public immutable numberOfBlocksForRandomness;
 
-	enum REWARD_STATUS { None, Submitted, Claimed, Processed }
+	RLNRegistry registry;
+	mapping(bytes32 => REWARD_STATUS) rewards;
+
+	// FIX: no need to store old targets
+	// find out a way to store less targets
+	mapping(uint256 => uint256) targets;
 
 	Snark.VerifyingKey rlnVerifyingKey;
-	mapping(bytes32 => REWARD_STATUS) rewards;
-	mapping(uint256 => uint256) targets;
+
+	enum REWARD_STATUS { None, Submitted, Claimed, Processed }
 
 	struct Signal {
 		bytes32 messageHash;
@@ -104,17 +107,27 @@ contract RLNInventivized is RLNRegistry {
 		uint256 membershipRoot;
 	}
 
-	constructor(Snark.VerifyingKey memory _verifyingKey, uint256 membershipFee) public RLNRegistry(membershipFee) {
+	constructor(
+		Snark.VerifyingKey memory _verifyingKey,
+		address _registry,
+		uint256 _rewardPeriod,
+		uint256 _claimPeriod,
+		uint256 _numberOfBlocksForRandomness
+	) public {
 		rlnVerifyingKey = _verifyingKey;
+		registry = RLNRegistry(_registry);
+		rewardPeriod = _rewardPeriod;
+		claimPeriod = _claimPeriod;
+		numberOfBlocksForRandomness = _numberOfBlocksForRandomness;
 	}
 
 	function commitProofOfMessage(bytes32 messageRoot, uint256 numberOfMessages) external payable {
 		require(msg.value == claimStakeAmount, 'RLNInventivized commitProofOfMessage: stake amount');
 
-		uint256 rewardEpoch = block.number / rewardPeriod;
+		uint256 rewardEpoch = rewardEpoch() - 1;
 
 		address beneficiary = msg.sender;
-		bytes32 rewardID = getRewardID(beneficiary, messageRoot, numberOfMessages, rewardEpoch);
+		bytes32 rewardID = rewardID(beneficiary, messageRoot, numberOfMessages, rewardEpoch);
 		require(rewards[rewardID] == REWARD_STATUS.None, 'RLNInventivized commitProofOfMessage: commitment already exists');
 
 		// store proof of message commitment
@@ -143,7 +156,7 @@ contract RLNInventivized is RLNRegistry {
 
 		// check if claim is submitted
 		address beneficiary = msg.sender;
-		bytes32 rewardID = getRewardID(beneficiary, messageRoot, numberOfMessages, rewardEpoch);
+		bytes32 rewardID = rewardID(beneficiary, messageRoot, numberOfMessages, rewardEpoch);
 		require(rewards[rewardID] == REWARD_STATUS.Submitted, 'RLNInventivized claimReward: reward claim is not submitted');
 
 		// check nullifier inclusion
@@ -153,7 +166,7 @@ contract RLNInventivized is RLNRegistry {
 		require(RLNKeccakMerkleUtils.checkInclusion(messageRoot, bytes32(signal.nullifier), nullifierIndex, nullifierWitness), 'RLNInventivized claimReward: nullifier is not included');
 
 		// check membership root
-		isValidMembershipRoot(signal.membershipRoot);
+		registry.isValidMembershipRoot(signal.membershipRoot);
 
 		// verify snark of the signal
 		// TODO might not be a best hash to field
@@ -168,7 +181,7 @@ contract RLNInventivized is RLNRegistry {
 		require(Snark.verify(rlnVerifyingKey, circuitInputs, rlnProof), 'Reward claim: signal verification failed');
 
 		// check if nullifier hits the target
-		require(signal.nullifier < getProofOfMessageTarget(rewardEpoch, numberOfMessages), 'Reward claim: proof of message failed');
+		require(signal.nullifier < proofOfMessageTarget(rewardEpoch, numberOfMessages), 'Reward claim: proof of message failed');
 
 		// process reward witdrawal
 		applyReward(beneficiary, numberOfMessages);
@@ -176,7 +189,9 @@ contract RLNInventivized is RLNRegistry {
 		rewards[rewardID] = REWARD_STATUS.Processed;
 	}
 
-	function getRewardID(
+	function applyReward(address beneficiary, uint256 numberOfMessages) internal {}
+
+	function rewardID(
 		address beneficiary,
 		bytes32 messageRoot,
 		uint256 numberOfMessages,
@@ -185,38 +200,45 @@ contract RLNInventivized is RLNRegistry {
 		return keccak256(abi.encodePacked(beneficiary, messageRoot, numberOfMessages, rewardEpoch));
 	}
 
-	function applyReward(address beneficiary, uint256 numberOfMessages) internal {}
-
-	function getProofOfMessageTarget(uint256 rewardEpoch, uint256 numberOfMessages) internal returns (uint256) {
-		uint256 target = targets[rewardEpoch];
-		if (target == 0) {
-			// FIX: generates biased randomness
-			targets[rewardEpoch] = getRandomnessForEpoch(rewardEpoch);
-			return targets[rewardEpoch];
-		} else {
-			return target;
-		}
+	function rewardEpoch() internal view returns (uint256) {
+		return block.number / rewardPeriod + 1;
 	}
 
-	function getRandomnessForEpoch(uint256 rewardEpoch) internal view returns (uint256) {
-		uint256 randomnessSourceStart = (rewardEpoch + 1 * rewardPeriod) - numberOfBlocksForRandomness;
-		bytes32[10] memory blockHashes;
-		require(randomnessSourceStart > block.number - 256, "RLN randomness: loss of randomness, can't start claim period");
-		blockHashes[0] = blockhash(randomnessSourceStart);
-		blockHashes[1] = blockhash(randomnessSourceStart - 1);
-		blockHashes[2] = blockhash(randomnessSourceStart - 2);
-		blockHashes[3] = blockhash(randomnessSourceStart - 3);
-		blockHashes[4] = blockhash(randomnessSourceStart - 4);
-		blockHashes[5] = blockhash(randomnessSourceStart - 5);
-		blockHashes[6] = blockhash(randomnessSourceStart - 6);
-		blockHashes[7] = blockhash(randomnessSourceStart - 7);
-		blockHashes[8] = blockhash(randomnessSourceStart - 8);
-		blockHashes[9] = blockhash(randomnessSourceStart - 9);
+	function proofOfMessageTarget(uint256 rewardEpoch, uint256 numberOfMessages) internal returns (uint256) {
+		uint256 target = targets[rewardEpoch];
+		if (target == 0) {
+			target = randomForEpoch(rewardEpoch);
+			targets[rewardEpoch] = target;
+		}
+		return target / numberOfMessages;
+	}
+
+	function randomForEpoch(uint256 rewardEpoch) internal view returns (uint256) {
+		uint256 _sourceOfRandomness = sourceOfRandomness(rewardEpoch);
+		require(_sourceOfRandomness + 256 > block.number, "RLNIncentivized randomForEpoch: loss of randomness, can't start claim period");
+		require(_sourceOfRandomness + numberOfBlocksForRandomness <= block.number, 'RLNIncentivized randomForEpoch: early attempt to get randomness');
+
+		bytes32[] memory blockHashes = new bytes32[](numberOfBlocksForRandomness);
+		for (uint256 i = 0; i < numberOfBlocksForRandomness; i++) {
+			blockHashes[i] = blockhash(_sourceOfRandomness + i);
+		}
+		// FIX: generates biased randomness
+		// possible solution: hash the nullifier to the word 2^256 field
 		return uint256(keccak256(abi.encodePacked(blockHashes))) % BN256.Q;
+	}
+
+	function sourceOfRandomness(uint256 rewardEpoch) internal view returns (uint256) {
+		return (rewardEpoch * rewardPeriod) - numberOfBlocksForRandomness;
 	}
 }
 
 
 contract RLN is RLNInventivized {
-	constructor(Snark.VerifyingKey memory _verifyingKey, uint256 membershipFee) public RLNInventivized(_verifyingKey, membershipFee) {}
+	constructor(
+		Snark.VerifyingKey memory _verifyingKey,
+		address _registry,
+		uint256 _rewardPeriod,
+		uint256 _claimPeriod,
+		uint256 _numberOfBlocksForRandomness
+	) public RLNInventivized(_verifyingKey, _registry, _rewardPeriod, _claimPeriod, _numberOfBlocksForRandomness) {}
 }
