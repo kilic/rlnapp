@@ -22,7 +22,6 @@ contract('RLN', () => {
 			await time.advanceBlockTo(START_TESTING_AT_BLOCK);
 		}
 	});
-
 	beforeEach(async () => {
 		registry = await RLNRegistry.new(MEMBERSHIP_FEE);
 		rln = await TestRLNContract.new(verifyingKey, registry.address, REWARD_PERIOD, CLAIM_PERIOD, NUM_OF_BLOCK_FOR_RANDOMNESS);
@@ -52,8 +51,6 @@ contract('RLN', () => {
 	it('get randomness | fail for being late', async () => {
 		let rewardEpoch = (await rln._rewardEpoch()).toNumber();
 		let endOfCurrentRewardEpoch = rewardEpoch * REWARD_PERIOD;
-		let expectedSourceOfRandomness = endOfCurrentRewardEpoch - NUM_OF_BLOCK_FOR_RANDOMNESS;
-		let sourceOfRandomness = (await rln._sourceOfRandomness(rewardEpoch)).toNumber();
 		await time.advanceBlockTo(endOfCurrentRewardEpoch + 300);
 		await expectRevert(rln._randomForEpoch(rewardEpoch), "RLNIncentivized randomForEpoch: loss of randomness, can't start claim period");
 	});
