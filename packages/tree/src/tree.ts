@@ -43,6 +43,10 @@ export class Tree {
 		return this.tree[level][index] || this.zeros[level];
 	}
 
+	public getLeaf(index: number): Node {
+		return this.tree[this.depth][index] || this.zeros[this.depth];
+	}
+
 	// witnessForBatch given merging subtree offset and depth constructs a witness
 	public witnessForBatch(mergeOffsetLower: number, subtreeDepth: number): Witness {
 		const mergeSize = 1 << subtreeDepth;
