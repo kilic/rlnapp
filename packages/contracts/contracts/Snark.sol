@@ -27,11 +27,8 @@ library Snark {
 		Proof memory proof
 	) internal view returns (bool) {
 		require(input.length + 1 == vk.ic.length, 'verifier-bad-input');
-		// Compute the linear combination vkX
 		uint256[2] memory vkX;
 
-		// Make sure that proof.A, B, and C are each less than the prime q
-		// Make sure that proof.A, B, and C are each less than the prime q
 		require(proof.a[0] < BN256.P, 'verifier-aX-gte-prime-q');
 		require(proof.a[1] < BN256.P, 'verifier-aY-gte-prime-q');
 

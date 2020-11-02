@@ -11,6 +11,7 @@
   "devDependencies": {
     "@openzeppelin/test-helpers": "^0.5.5",
     "@rln/tree": "0.1.0",
+    "@rln/rln": "0.1.0",
     "chai": "^4.2.0",
     "prettier": "^2.0.4",
     "prettier-plugin-solidity": "^1.0.0-alpha.42"
