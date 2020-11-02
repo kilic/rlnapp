@@ -1,12 +1,11 @@
 import { Tree } from '@rln/tree';
-import { FR } from '../src/ecc';
-import { RLN } from '../src/rln';
+import { RLN, RLNUtils } from '../src/rln';
 import * as ethers from 'ethers';
 
 import * as chai from 'chai';
 const assert = chai.assert;
 
-const DEPTH = 4;
+const DEPTH = 3;
 
 function randAddress(): string {
 	return ethers.utils.getAddress(ethers.utils.hexlify(ethers.utils.randomBytes(20)));
@@ -23,6 +22,9 @@ describe('rln circuit bindings', function () {
 		rln = await RLN.new(DEPTH);
 		tree = Tree.new(DEPTH);
 		assert.equal(0, tree.insertSingle(memberIndex, memberKey));
+		const rawVk = rln.verifyingKey();
+		const res = RLNUtils.rawVerifyingKeyToSol(rawVk);
+		console.log(res);
 	});
 	it('generate and verify proof', () => {
 		const epoch = 100;

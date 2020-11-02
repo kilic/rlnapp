@@ -1,6 +1,6 @@
 {
   "name": "@rln/rln",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",

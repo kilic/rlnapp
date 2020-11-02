@@ -1,15 +1,15 @@
 {
-  "name": "@rln/circuit",
+  "name": "@rln/rln",
   "collaborators": [
     "Onur Kılıç <kiliconu@itu.edu.tr>"
   ],
   "version": "0.1.0",
   "files": [
-    "rln-circuit_bg.wasm",
-    "rln-circuit.js",
-    "rln-circuit_bg.js",
-    "rln-circuit.d.ts"
+    "circuit_bg.wasm",
+    "circuit.js",
+    "circuit_bg.js",
+    "circuit.d.ts"
   ],
-  "main": "rln-circuit.js",
-  "types": "rln-circuit.d.ts"
+  "main": "circuit.js",
+  "types": "circuit.d.ts"
 }

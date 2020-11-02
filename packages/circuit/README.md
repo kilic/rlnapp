@@ -18,7 +18,13 @@ cargo run --release --example export_test_keys
 
 ## Wasm Support
 
-## Test
+### Build
+
+```
+wasm-pack build --release --target=nodejs --out-name=$PACKAGE --out-dir=$PACKAGE_DIR -- --features wasm
+```
+
+### Test
 
 With wasm-pack:
 
@@ -33,6 +39,3 @@ Follow the steps [here](https://rustwasm.github.io/docs/wasm-bindgen/wasm-bindge
 ```
 cargo test --release --target wasm32-unknown-unknown --features wasm
 ```
-
-## Typescript
-
