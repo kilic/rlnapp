@@ -1,14 +1,15 @@
 {
   "name": "@rln/circuit",
-  "description": "RLN wasm prover and verifier",
-  "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
+  "collaborators": [
+    "Onur Kılıç <kiliconu@itu.edu.tr>"
+  ],
   "version": "0.1.0",
   "files": [
-    "rln_bg.wasm",
-    "rln.js",
-    "rln.d.ts"
+    "rln-circuit_bg.wasm",
+    "rln-circuit.js",
+    "rln-circuit_bg.js",
+    "rln-circuit.d.ts"
   ],
-  "module": "rln.js",
-  "types": "rln.d.ts",
-  "sideEffects": false
+  "main": "rln-circuit.js",
+  "types": "rln-circuit.d.ts"
 }
