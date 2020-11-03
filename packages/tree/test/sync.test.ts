@@ -4,6 +4,7 @@ import { wallet, provider, downProvider } from './provider';
 import { Rln } from '../src/generated_contract_wrappers/Rln';
 import { utils } from 'ethers';
 import { TreeSync } from '../src/sync';
+import { newPoseidonHasher } from '../src/poseidon';
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
@@ -12,7 +13,7 @@ const assert = chai.assert;
 const expect = chai.expect;
 const RLN_FACTORY = new RlnFactory(wallet);
 const POSEIDON_PARAMETERS = {}; // use default
-const HASHER = Hasher.new(POSEIDON_PARAMETERS);
+const HASHER = newPoseidonHasher(POSEIDON_PARAMETERS);
 
 const MEMBERSHIP_FEE = utils.parseEther('1');
 

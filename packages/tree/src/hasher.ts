@@ -1,40 +1,36 @@
+import { ethers } from 'ethers';
+
 const poseidon = require('@rln/poseidon').poseidon;
 
 export type Node = string;
 
 const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
-export interface PoseidonConstructor {
-	t?: number;
-	rf?: number;
-	rp?: number;
-	personC?: Buffer;
-	personM?: Buffer;
-	seed?: Buffer;
-}
-
-type HF = (input: string[]) => any;
+export type HF = (input: string[]) => any;
 
 export class Hasher {
 	private hf: HF;
 	public readonly identity: string;
 
-	public static new(constructor: PoseidonConstructor): Hasher {
-		const { hasher } = poseidon.createHasher(...Object.values(constructor));
-		return new Hasher(hasher);
+	public static new(hf: HF): Hasher {
+		return new Hasher(hf);
 	}
 
 	constructor(hf: HF) {
 		this.hf = hf;
-		this.identity = this.hf(['0x00']);
+		this.identity = this.hf([ZERO]);
+	}
+
+	public toLeaf(data: string): string {
+		return this.hash(data);
 	}
 
 	public hash(x0: string) {
-		return '0x' + this.hf([x0]).toString(16);
+		return this.hf([x0]);
 	}
 
 	public hash2(x0: string, x1: string) {
-		return '0x' + this.hf([x0, x1]).toString(16);
+		return this.hf([x0, x1]);
 	}
 
 	public zeros(depth: number): Array<Node> {

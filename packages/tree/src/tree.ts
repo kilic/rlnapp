@@ -20,8 +20,8 @@ export class Tree {
 	private readonly tree: Array<Level> = [];
 	private readonly hasher: Hasher;
 
-	public static new(depth: number, hasher?: Hasher): Tree {
-		return new Tree(depth, hasher || Hasher.new({}));
+	public static new(depth: number, hasher: Hasher): Tree {
+		return new Tree(depth, hasher);
 	}
 
 	constructor(depth: number, hasher: Hasher) {
