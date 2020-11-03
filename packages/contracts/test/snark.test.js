@@ -9,7 +9,7 @@ function randAddress() {
 	return web3.utils.randomHex(20);
 }
 
-contract('Snark', () => {
+contract('Snark Verification', () => {
 	let rln;
 	let snark;
 	let tree;
@@ -29,7 +29,6 @@ contract('Snark', () => {
 		const target = randAddress();
 		const rlnOut = rln.generateRLN(tree, epoch, signal, target, memberKey, memberIndex);
 		assert.isTrue(rln.verify(rlnOut.proof, rlnOut.publicInputs));
-		console.log(rlnOut.proof.length);
 		const proof = RLNUtils.rawProofToSol(rlnOut.proof);
 		const inputs = RLNUtils.rawPublicInputsToSol(rlnOut.publicInputs);
 		assert.isTrue(await snark.verify(verifyingKey, inputs, proof));

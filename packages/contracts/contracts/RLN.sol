@@ -1,39 +1,10 @@
 pragma solidity 0.6.10;
 pragma experimental ABIEncoderV2;
 
-import { PoseidonTree } from './PoseidonTree.sol';
-import { Snark } from './Snark.sol';
-import { BN256 } from './BN256.sol';
+import { AccountTree32 } from './trees/AccountTree32.sol';
+import { Snark } from './crypto/Snark.sol';
+import { BN256 } from './crypto/BN256.sol';
 
-
-/*
-
-# Message
-
-	```
-	message = "..."
-	signal = hash(enc(message))
-	signal_hash = hash(signal, reward_target)
-	```
-
-# Polynomial equation of RLN
-
-	```
-	y = a1 * x + a0
-	x = signal_hash
-	a0 = private_key
-	a1 = hash(epoch, a0)
-	y = signal_hash * hash(epoch, private_key) + private_key
-	```
-
-# Circuit
-
-	```
-	nullifier = hash(a1) = hash(hash(epoch, a0)) = hash(hash(epoch, private_key))
-	public_inputs = (x, y, epoch, nullifier, membershipRoot)
-	```
-
-*/
 
 library RLNKeccakMerkleUtils {
 	function checkInclusion(
@@ -58,7 +29,8 @@ library RLNKeccakMerkleUtils {
 }
 
 
-contract RLNRegistry is PoseidonTree {
+// NOTICE: here we must switch the depth manually
+contract RLNRegistry is AccountTree16 {
 	// Accept only ETH for now
 	uint256 membershipFee;
 
@@ -71,8 +43,8 @@ contract RLNRegistry is PoseidonTree {
 		_updateSingle(newMember);
 	}
 
-	function registerBatch(uint256[BATCH_SIZE] memory newMembers) external payable returns (uint256) {
-		require(msg.value == membershipFee * BATCH_SIZE, 'RLNRegsitry: fee is not sufficient');
+	function registerBatch(uint256[] memory newMembers) external payable returns (uint256) {
+		require(msg.value == membershipFee * newMembers.length, 'RLNRegsitry: fee is not sufficient');
 		_updateBatch(newMembers);
 	}
 
@@ -190,7 +162,7 @@ contract RLNInventivized {
 	}
 
 	function applyReward(address beneficiary, uint256 numberOfMessages) internal {
-		// TODO: source of reward is not clear
+		// TODO: economic source of reward is not decided yet
 	}
 
 	function rewardID(
@@ -206,17 +178,17 @@ contract RLNInventivized {
 		return block.number / rewardPeriod + 1;
 	}
 
-	function proofOfMessageTarget(uint256 rewardEpoch, uint256 nullifier) internal returns (uint256) {
-		uint256 _randNumber = randNumber[rewardEpoch];
+	function proofOfMessageTarget(uint256 _rewardEpoch, uint256 nullifier) internal returns (uint256) {
+		uint256 _randNumber = randNumber[_rewardEpoch];
 		if (_randNumber == 0) {
-			_randNumber = randomForEpoch(rewardEpoch);
-			randNumber[rewardEpoch] = _randNumber;
+			_randNumber = randomForEpoch(_rewardEpoch);
+			randNumber[_rewardEpoch] = _randNumber;
 		}
 		return (_randNumber * nullifier);
 	}
 
-	function randomForEpoch(uint256 rewardEpoch) internal view returns (uint256) {
-		uint256 _sourceOfRandomness = sourceOfRandomness(rewardEpoch);
+	function randomForEpoch(uint256 _rewardEpoch) internal view returns (uint256) {
+		uint256 _sourceOfRandomness = sourceOfRandomness(_rewardEpoch);
 		require(_sourceOfRandomness + 256 > block.number, "RLNIncentivized randomForEpoch: loss of randomness, can't start claim period");
 		require(_sourceOfRandomness + numberOfBlocksForRandomness <= block.number, 'RLNIncentivized randomForEpoch: early attempt to get randomness');
 
@@ -224,13 +196,14 @@ contract RLNInventivized {
 		for (uint256 i = 0; i < numberOfBlocksForRandomness; i++) {
 			blockHashes[i] = blockhash(_sourceOfRandomness + i);
 		}
-		// FIX: generates biased randomness
-		// possible solution: hash the nullifier to the word 2^256 field
+		// FIX: hashing to field below generates biased randomness
+		// possible solution 1: hash the nullifier to the word 2^256 field
+		// possible solution 2: use trick in BLS standart
 		return uint256(keccak256(abi.encodePacked(blockHashes))) % BN256.Q;
 	}
 
-	function sourceOfRandomness(uint256 rewardEpoch) internal view returns (uint256) {
-		return (rewardEpoch * rewardPeriod) - numberOfBlocksForRandomness;
+	function sourceOfRandomness(uint256 _rewardEpoch) internal view returns (uint256) {
+		return (_rewardEpoch * rewardPeriod) - numberOfBlocksForRandomness;
 	}
 }
 

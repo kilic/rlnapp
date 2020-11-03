@@ -1,9 +1,9 @@
 pragma solidity 0.6.10;
 
-import './PoseidonHasher.sol';
+import '../crypto/PoseidonHasher.sol';
 
 
-contract PoseidonTreeWithQue is PoseidonHasher {
+contract AccountTreeWithQue is PoseidonHasher {
 	uint256 public constant DEPTH = 32;
 	uint256 public immutable MIN_SUBPoseidonTree_DEPTH;
 

@@ -1,6 +1,6 @@
 pragma solidity 0.6.10;
 
-import '../PoseidonHasher.sol';
+import '../crypto/PoseidonHasher.sol';
 
 
 contract TestPoseidon is PoseidonHasher {

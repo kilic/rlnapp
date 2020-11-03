@@ -1,10 +1,10 @@
 pragma solidity 0.6.10;
 
-import '../PoseidonTreeWithQue.sol';
+import '../trees/AccountTreeWithQue.sol';
 
 
-contract TestPoseidonTreeWithQue is PoseidonTreeWithQue {
-	constructor(uint256 minSubtreeDepth) public PoseidonTreeWithQue(minSubtreeDepth) {}
+contract TestAccounrTreeWithQue is AccountTreeWithQue {
+	constructor(uint256 minSubtreeDepth) public AccountTreeWithQue(minSubtreeDepth) {}
 
 	function _addToQueBatch(uint256[] calldata _leafs) external {
 		return super.addToQueBatch(_leafs);

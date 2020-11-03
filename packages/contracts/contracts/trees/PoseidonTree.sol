@@ -1,7 +1,7 @@
 pragma solidity 0.6.10;
 
-import './PoseidonHasher.sol';
-import './BN256.sol';
+import '../crypto/PoseidonHasher.sol';
+import '../crypto/BN256.sol';
 
 
 contract PoseidonTree is PoseidonHasher {
