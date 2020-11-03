@@ -5,8 +5,8 @@
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
     "clear": "rm -rf lib",
+    "build": "yarn clear && tsc -b",
     "test": "tsc -b && mocha -r ts-node/register lib/test//*.js"
   },
   "dependencies": {

@@ -1,2 +1,2 @@
 export { RLN, RLNUtils } from './rln';
-export { SolProof, SolVerifyingKey } from './rln';
+export { ProofHex, VerifyingKeyHex } from './rln';

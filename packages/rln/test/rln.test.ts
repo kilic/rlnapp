@@ -1,11 +1,13 @@
 import { Tree } from '@rln/tree';
-import { RLN, RLNUtils } from '../src/rln';
+import { RLN } from '../src/rln';
 import * as ethers from 'ethers';
 
 import * as chai from 'chai';
+import { newPoseidonHasher } from '@rln/tree';
 const assert = chai.assert;
 
 const DEPTH = 3;
+const hasher = newPoseidonHasher({});
 
 function randAddress(): string {
 	return ethers.utils.getAddress(ethers.utils.hexlify(ethers.utils.randomBytes(20)));
@@ -20,17 +22,15 @@ describe('rln circuit bindings', function () {
 	const memberKey = '0xff';
 	before(async () => {
 		rln = await RLN.new(DEPTH);
-		tree = Tree.new(DEPTH);
+
+		tree = Tree.new(DEPTH, hasher);
 		assert.equal(0, tree.insertSingle(memberIndex, memberKey));
-		const rawVk = rln.verifyingKey();
-		const res = RLNUtils.rawVerifyingKeyToSol(rawVk);
-		console.log(res);
 	});
 	it('generate and verify proof', () => {
 		const epoch = 100;
 		const signal = 'xxx';
 		const target = randAddress();
-		const rlnOut = rln.generateRLN(tree, epoch, signal, target, memberKey, memberIndex);
-		assert.isTrue(rln.verify(rlnOut.proof, rlnOut.publicInputs));
+		const rlnOut = rln.generate(tree, epoch, signal, target, memberKey, memberIndex);
+		assert.isTrue(rln.verify(rlnOut.rawProof, rlnOut.rawPublicInputs));
 	});
 });

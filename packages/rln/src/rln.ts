@@ -1,12 +1,14 @@
 import { RLNWasm } from '@rln/circuit';
 import { Tree, Hasher } from '@rln/tree';
+import { newPoseidonHasher, newKeccakHasher } from '@rln/tree';
 import * as ethers from 'ethers';
+import { stringify } from 'querystring';
 import { FR, FP } from './ecc';
 const assert = require('assert');
 
 const POSEIDON_PARAMETERS = {}; // use default
-const poseidonHasher = Hasher.new(POSEIDON_PARAMETERS);
-const keccakHasher = ethers.utils.solidityKeccak256;
+const poseidonHasher = newPoseidonHasher(POSEIDON_PARAMETERS);
+const keccakHasher = newKeccakHasher();
 const FR_SIZE = 32;
 const FP_SIZE = 32;
 const G1_SIZE = FP_SIZE * 2;
@@ -14,13 +16,15 @@ const G2_SIZE = FP_SIZE * 4;
 const RAW_PROOF_SIZE = G1_SIZE + G2_SIZE + G1_SIZE;
 const RAW_PUBLIC_INPUTS_SIZE = FR_SIZE * 5;
 
-export interface SolProof {
+type Fr = any;
+
+export interface ProofHex {
 	a: string[];
 	b: string[];
 	c: string[];
 }
 
-export interface SolVerifyingKey {
+export interface VerifyingKeyHex {
 	alpha1: string[];
 	beta2: string[];
 	gamma2: string[];
@@ -28,34 +32,63 @@ export interface SolVerifyingKey {
 	ic: string[][];
 }
 
-export interface RLNOutput {
-	proof: Uint8Array;
-	publicInputs: Uint8Array;
-}
+export class RLNOut {
+	public static new(rawProof: Uint8Array, root: Fr, epoch: Fr, x: Fr, y: Fr, nullifier: Fr): RLNOut {
+		return new RLNOut(rawProof, root, epoch, x, y, nullifier);
+	}
 
-function g1ToHex(data: Buffer, o: number): string[] {
-	const x = '0x' + data.toString('hex', o, o + FP_SIZE);
-	const y = '0x' + data.toString('hex', o + FP_SIZE, o + 2 * FP_SIZE);
-	return [x, y];
-}
+	public rawPublicInputs: Uint8Array;
+	private constructor(public rawProof: Uint8Array, private _root: Fr, private _epoch: Fr, private _x: Fr, private _y: Fr, private _nullifier: Fr) {
+		this.rawPublicInputs = Buffer.alloc(FR_SIZE * 5);
+		FR.toRprLE(this.rawPublicInputs, 0 * FR_SIZE, _root);
+		FR.toRprLE(this.rawPublicInputs, 1 * FR_SIZE, _epoch);
+		FR.toRprLE(this.rawPublicInputs, 2 * FR_SIZE, _x);
+		FR.toRprLE(this.rawPublicInputs, 3 * FR_SIZE, _y);
+		FR.toRprLE(this.rawPublicInputs, 4 * FR_SIZE, _nullifier);
+	}
 
-function g2ToHex(data: Buffer, o: number): string[] {
-	const x0 = '0x' + data.toString('hex', o, o + FP_SIZE);
-	const x1 = '0x' + data.toString('hex', o + 1 * FP_SIZE, o + 2 * FP_SIZE);
-	const y0 = '0x' + data.toString('hex', o + 2 * FP_SIZE, o + 3 * FP_SIZE);
-	const y1 = '0x' + data.toString('hex', o + 3 * FP_SIZE, o + 4 * FP_SIZE);
-	return [x0, x1, y0, y1];
+	get nullifier(): string {
+		return RLNUtils.frToHex(this._nullifier);
+	}
+
+	get root(): string {
+		return RLNUtils.frToHex(this._root);
+	}
+
+	get epoch(): string {
+		return RLNUtils.frToHex(this._epoch);
+	}
+
+	get x(): string {
+		return RLNUtils.frToHex(this._x);
+	}
+
+	get y(): string {
+		return RLNUtils.frToHex(this._y);
+	}
+
+	get publicInputs(): string[] {
+		return [this.root, this.epoch, this.x, this.y, this.nullifier];
+	}
+
+	get proof(): ProofHex {
+		const buf = Buffer.from(this.rawProof);
+		const a = RLNUtils.g1ToHex(buf, 0);
+		const b = RLNUtils.g1ToHex(buf, G1_SIZE);
+		const c = RLNUtils.g1ToHex(buf, G1_SIZE + G2_SIZE);
+		return { a, b, c };
+	}
 }
 
 export class RLNUtils {
-	public static rawVerifyingKeyToSol(rawVk: Uint8Array): SolVerifyingKey {
+	public static rawVerifyingKeyToSol(rawVk: Uint8Array): VerifyingKeyHex {
 		const buf = Buffer.from(rawVk);
-		const alpha1 = g1ToHex(buf, 0);
+		const alpha1 = this.g1ToHex(buf, 0);
 		// skip beta1
-		const beta2 = g2ToHex(buf, 2 * G1_SIZE);
-		const gamma2 = g2ToHex(buf, 2 * G1_SIZE + G2_SIZE);
+		const beta2 = this.g2ToHex(buf, 2 * G1_SIZE);
+		const gamma2 = this.g2ToHex(buf, 2 * G1_SIZE + G2_SIZE);
 		// skip delta1
-		const delta2 = g2ToHex(buf, 3 * G1_SIZE + 2 * G2_SIZE);
+		const delta2 = this.g2ToHex(buf, 3 * G1_SIZE + 2 * G2_SIZE);
 
 		let off = 3 * G1_SIZE + 3 * G2_SIZE;
 		const icLen = buf.readUInt32BE(off);
@@ -65,7 +98,7 @@ export class RLNUtils {
 
 		let ic: string[][] = [];
 		for (let i = 0; i < icLen; i++) {
-			ic.push(g1ToHex(buf, off + i * G1_SIZE));
+			ic.push(this.g1ToHex(buf, off + i * G1_SIZE));
 		}
 
 		return {
@@ -77,38 +110,37 @@ export class RLNUtils {
 		};
 	}
 
-	public static rawProofToSol(rawProof: Uint8Array): SolProof {
-		assert(rawProof.length == RAW_PROOF_SIZE);
-
-		const ax = '0x' + FP.fromRprBE(rawProof, 0 * FP_SIZE).toString(16);
-		const ay = '0x' + FP.fromRprBE(rawProof, 1 * FP_SIZE).toString(16);
-		const bx0 = '0x' + FP.fromRprBE(rawProof, 2 * FP_SIZE).toString(16);
-		const bx1 = '0x' + FP.fromRprBE(rawProof, 3 * FP_SIZE).toString(16);
-		const by0 = '0x' + FP.fromRprBE(rawProof, 4 * FP_SIZE).toString(16);
-		const by1 = '0x' + FP.fromRprBE(rawProof, 5 * FP_SIZE).toString(16);
-		const cx = '0x' + FP.fromRprBE(rawProof, 6 * FP_SIZE).toString(16);
-		const cy = '0x' + FP.fromRprBE(rawProof, 7 * FP_SIZE).toString(16);
-
-		return {
-			a: [ax, ay],
-			b: [bx0, bx1, by0, by1],
-			c: [cx, cy]
-		};
+	static frToHex(e: Fr): string {
+		const buf = Buffer.alloc(FR_SIZE);
+		FR.toRprBE(buf, e);
+		return '0x' + buf.toString('hex');
 	}
 
-	public static rawPublicInputsToSol(rawProof: Uint8Array): string[] {
-		assert(rawProof.length == RAW_PUBLIC_INPUTS_SIZE);
-		const root = '0x' + FR.fromRprLE(rawProof, 0 * FP_SIZE).toString(16);
-		const epoch = '0x' + FR.fromRprLE(rawProof, 1 * FP_SIZE).toString(16);
-		const shareX = '0x' + FR.fromRprLE(rawProof, 2 * FP_SIZE).toString(16);
-		const shareY = '0x' + FR.fromRprLE(rawProof, 3 * FP_SIZE).toString(16);
-		const nullifier = '0x' + FR.fromRprLE(rawProof, 4 * FP_SIZE).toString(16);
-		console.log(root);
-		console.log(epoch);
-		console.log(shareX);
-		console.log(shareY);
-		console.log(nullifier);
-		return [root, epoch, shareX, shareY, nullifier];
+	static fpToHex(e: Fr): string {
+		const buf = Buffer.alloc(FP_SIZE);
+		FP.toRprBE(buf, e);
+		return '0x' + buf.toString('hex');
+	}
+
+	static g1ToHex(data: Buffer, o: number): string[] {
+		const x = '0x' + data.toString('hex', o, o + FP_SIZE);
+		const y = '0x' + data.toString('hex', o + FP_SIZE, o + 2 * FP_SIZE);
+		return [x, y];
+	}
+
+	static g2ToHex(data: Buffer, o: number): string[] {
+		const x0 = '0x' + data.toString('hex', o, o + FP_SIZE);
+		const x1 = '0x' + data.toString('hex', o + 1 * FP_SIZE, o + 2 * FP_SIZE);
+		const y0 = '0x' + data.toString('hex', o + 2 * FP_SIZE, o + 3 * FP_SIZE);
+		const y1 = '0x' + data.toString('hex', o + 3 * FP_SIZE, o + 4 * FP_SIZE);
+		return [x0, x1, y0, y1];
+	}
+
+	// use only for testing purposes
+	public static newKeyPair(): { priv: string; pub: string } {
+		const priv = '0x' + FR.random().toString(16);
+		const pub = poseidonHasher.hash(priv);
+		return { priv, pub };
 	}
 }
 
@@ -134,11 +166,11 @@ export class RLN {
 		return this.circuit.verify(proof, inputs);
 	}
 
-	public generateRLN(tree: Tree, epoch: number, signal: string, target: string, key: string, memberIndex: number): RLNOutput {
+	public generate(tree: Tree, epoch: number, signal: string, target: string, key: string, memberIndex: number): RLNOut {
 		// signal
 		const targetAddress = ethers.utils.getAddress(target);
-		const signalHash1 = keccakHasher(['string'], [signal]);
-		const signalHash2 = keccakHasher(['address', 'string'], [targetAddress, signalHash1]);
+		const signalHash1 = ethers.utils.solidityKeccak256(['string'], [signal]);
+		const signalHash2 = ethers.utils.solidityKeccak256(['address', 'string'], [targetAddress, signalHash1]);
 
 		// TODO: we likely to change hash to field
 		const x = FR.e(signalHash2);
@@ -190,14 +222,14 @@ export class RLN {
 		// Public inputs
 		// root, epoch, share_x, share_y, nullifier
 
-		const publicInputs = Buffer.alloc(FR_SIZE * 5);
+		// const publicInputs = Buffer.alloc(FR_SIZE * 5);
 
-		FR.toRprLE(publicInputs, 0 * FR_SIZE, _root);
-		FR.toRprLE(publicInputs, 1 * FR_SIZE, _epoch);
-		FR.toRprLE(publicInputs, 2 * FR_SIZE, x);
-		FR.toRprLE(publicInputs, 3 * FR_SIZE, y);
-		FR.toRprLE(publicInputs, 4 * FR_SIZE, nullifier);
+		// FR.toRprLE(publicInputs, 0 * FR_SIZE, _root);
+		// FR.toRprLE(publicInputs, 1 * FR_SIZE, _epoch);
+		// FR.toRprLE(publicInputs, 2 * FR_SIZE, x);
+		// FR.toRprLE(publicInputs, 3 * FR_SIZE, y);
+		// FR.toRprLE(publicInputs, 4 * FR_SIZE, nullifier);
 
-		return { proof, publicInputs };
+		return RLNOut.new(proof, _root, _epoch, x, y, nullifier);
 	}
 }
