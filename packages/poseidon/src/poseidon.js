@@ -14,6 +14,12 @@ hasherInit = blakejs.blake2sInit;
 hasherUpdate = blakejs.blake2sUpdate;
 hasherFinal = blakejs.blake2sFinal;
 
+function frToHex(e) {
+	const buf = Buffer.alloc(32);
+	F.toRprBE(buf, 0, e);
+	return '0x' + buf.toString('hex');
+}
+
 // genConstants expects Uint8Array for persona and seed as Uint8Array
 function genConstants(persona, seed, l) {
 	let source = seed;
@@ -99,7 +105,8 @@ exports.createHasher = (t, nRoundsF, nRoundsP, personaC, personaM, seed) => {
 				}
 				if (i != nRounds - 1) mul_mds_matrix(state, M);
 			}
-			return F.normalize(state[0]);
+			// return F.normalize(state[0]);
+			return frToHex(state[0]);
 		},
 		C,
 		M
