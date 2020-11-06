@@ -1,38 +1,10 @@
-pragma solidity 0.6.10;
+pragma solidity 0.7.4;
 
-import '../trees/AccountTree32.sol';
-import '../trees/AccountTree24.sol';
-import '../trees/AccountTree16.sol';
+import '../trees/AccountTree.sol';
 
 
-contract TestAccountTree32 is AccountTree32 {
-	constructor() public {}
-
-	function updateSingle(uint256 leaf) external {
-		_updateSingle(leaf);
-	}
-
-	function updateBatch(uint256[] memory leafs) external {
-		_updateBatch(leafs);
-	}
-}
-
-
-contract TestAccountTree24 is AccountTree24 {
-	constructor() public {}
-
-	function updateSingle(uint256 leaf) external {
-		_updateSingle(leaf);
-	}
-
-	function updateBatch(uint256[] memory leafs) external {
-		_updateBatch(leafs);
-	}
-}
-
-
-contract TestAccountTree16 is AccountTree16 {
-	constructor() public {}
+contract TestAccountTree is AccountTree {
+	constructor(uint256[] memory _zeros, uint256 batchDepth) public AccountTree(_zeros, batchDepth) {}
 
 	function updateSingle(uint256 leaf) external {
 		_updateSingle(leaf);

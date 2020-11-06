@@ -1,9 +1,10 @@
 const TestSnark = artifacts.require('TestSnark');
 const { assert } = require('chai');
-const { Tree } = require('@rln/tree');
-const { RLN, RLNUtils } = require('@rln/rln');
+const { Tree, newPoseidonHasher } = require('@rln/tree');
+const { RLNUtils } = require('@rln/rln');
+const initRLN = require('./init_rln');
 
-const DEPTH = 3;
+const DEPTH = 4;
 
 function randAddress() {
 	return web3.utils.randomHex(20);
@@ -17,8 +18,9 @@ contract('Snark Verification', () => {
 	const memberKey = '0xff';
 	let verifyingKey;
 	before(async () => {
-		rln = await RLN.new(DEPTH);
-		tree = Tree.new(DEPTH);
+		rln = initRLN(DEPTH);
+		hasher = newPoseidonHasher({});
+		tree = Tree.new(DEPTH, hasher);
 		assert.equal(0, tree.insertSingle(memberIndex, memberKey));
 		snark = await TestSnark.new();
 		verifyingKey = RLNUtils.rawVerifyingKeyToSol(rln.verifyingKey());
@@ -27,10 +29,8 @@ contract('Snark Verification', () => {
 		const epoch = 100;
 		const signal = 'xxx yyy zzz';
 		const target = randAddress();
-		const rlnOut = rln.generateRLN(tree, epoch, signal, target, memberKey, memberIndex);
-		assert.isTrue(rln.verify(rlnOut.proof, rlnOut.publicInputs));
-		const proof = RLNUtils.rawProofToSol(rlnOut.proof);
-		const inputs = RLNUtils.rawPublicInputsToSol(rlnOut.publicInputs);
-		assert.isTrue(await snark.verify(verifyingKey, inputs, proof));
+		const rlnOut = rln.generate(tree, epoch, signal, target, memberKey, memberIndex);
+		assert.isTrue(rln.verify(rlnOut.rawProof, rlnOut.rawPublicInputs));
+		assert.isTrue(await snark.verify(verifyingKey, rlnOut.publicInputs, rlnOut.proof));
 	});
 });

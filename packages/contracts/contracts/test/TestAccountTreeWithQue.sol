@@ -1,9 +1,9 @@
-pragma solidity 0.6.10;
+pragma solidity 0.7.4;
 
 import '../trees/AccountTreeWithQue.sol';
 
 
-contract TestAccounrTreeWithQue is AccountTreeWithQue {
+contract TestAccountTreeWithQue is AccountTreeWithQue {
 	constructor(uint256 minSubtreeDepth) public AccountTreeWithQue(minSubtreeDepth) {}
 
 	function _addToQueBatch(uint256[] calldata _leafs) external {

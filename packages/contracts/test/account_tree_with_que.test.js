@@ -1,10 +1,9 @@
-const TestPoseidonTreeContract = artifacts.require('TestPoseidonTree');
-const TestPoseidonTreeWithQueContract = artifacts.require('TestPoseidonTreeWithQue');
-const Hasher = require('@rln/tree').Hasher;
+const TestAccountTreeWithQueContract = artifacts.require('TestAccountTreeWithQue');
 const Tree = require('@rln/tree').Tree;
+const { newPoseidonHasher } = require('@rln/tree');
 const { assert } = require('chai');
 
-const hasher = Hasher.new({});
+const hasher = newPoseidonHasher({});
 const utils = web3.utils;
 
 let DEPTH;
@@ -16,7 +15,7 @@ contract('tree with que', () => {
 	const minSubtreeDepth = 1;
 	beforeEach(async () => {
 		tree = Tree.new(32, hasher);
-		treeContract = await TestPoseidonTreeWithQueContract.new(minSubtreeDepth);
+		treeContract = await TestAccountTreeWithQueContract.new(minSubtreeDepth);
 	});
 
 	it('Add que', async () => {

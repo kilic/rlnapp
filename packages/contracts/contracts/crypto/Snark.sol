@@ -1,4 +1,4 @@
-pragma solidity 0.6.10;
+pragma solidity 0.7.4;
 
 import { BN256 } from './BN256.sol';
 
