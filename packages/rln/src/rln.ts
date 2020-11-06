@@ -8,13 +8,10 @@ const assert = require('assert');
 
 const POSEIDON_PARAMETERS = {}; // use default
 const poseidonHasher = newPoseidonHasher(POSEIDON_PARAMETERS);
-const keccakHasher = newKeccakHasher();
 const FR_SIZE = 32;
 const FP_SIZE = 32;
 const G1_SIZE = FP_SIZE * 2;
 const G2_SIZE = FP_SIZE * 4;
-const RAW_PROOF_SIZE = G1_SIZE + G2_SIZE + G1_SIZE;
-const RAW_PUBLIC_INPUTS_SIZE = FR_SIZE * 5;
 
 type Fr = any;
 
@@ -74,7 +71,7 @@ export class RLNOut {
 	get proof(): ProofHex {
 		const buf = Buffer.from(this.rawProof);
 		const a = RLNUtils.g1ToHex(buf, 0);
-		const b = RLNUtils.g1ToHex(buf, G1_SIZE);
+		const b = RLNUtils.g2ToHex(buf, G1_SIZE);
 		const c = RLNUtils.g1ToHex(buf, G1_SIZE + G2_SIZE);
 		return { a, b, c };
 	}
@@ -112,13 +109,13 @@ export class RLNUtils {
 
 	static frToHex(e: Fr): string {
 		const buf = Buffer.alloc(FR_SIZE);
-		FR.toRprBE(buf, e);
+		FR.toRprBE(buf, 0, e);
 		return '0x' + buf.toString('hex');
 	}
 
 	static fpToHex(e: Fr): string {
 		const buf = Buffer.alloc(FP_SIZE);
-		FP.toRprBE(buf, e);
+		FP.toRprBE(buf, 0, e);
 		return '0x' + buf.toString('hex');
 	}
 
@@ -145,18 +142,24 @@ export class RLNUtils {
 }
 
 export class RLN {
-	static async new(depth: number): Promise<RLN> {
+	private _logTime = false;
+	static new(depth: number): RLN {
 		console.time('circuit_init');
 		const circuit = RLNWasm.new(depth);
 		console.timeEnd('circuit_init');
 		return new RLN(circuit);
 	}
 
-	static async restore(circuit: RLNWasm) {
+	static restore(depth: number, params: Uint8Array): RLN {
+		const circuit = RLNWasm.new_with_raw_params(depth, params);
 		return new RLN(circuit);
 	}
 
 	private constructor(private circuit: RLNWasm) {}
+
+	public logTime(d: boolean) {
+		this._logTime = d;
+	}
 
 	public verifyingKey(): Uint8Array {
 		return this.circuit.verifier_key();
@@ -170,7 +173,7 @@ export class RLN {
 		// signal
 		const targetAddress = ethers.utils.getAddress(target);
 		const signalHash1 = ethers.utils.solidityKeccak256(['string'], [signal]);
-		const signalHash2 = ethers.utils.solidityKeccak256(['address', 'string'], [targetAddress, signalHash1]);
+		const signalHash2 = ethers.utils.solidityKeccak256(['address', 'bytes32'], [targetAddress, signalHash1]);
 
 		// TODO: we likely to change hash to field
 		const x = FR.e(signalHash2);
@@ -215,20 +218,13 @@ export class RLN {
 
 		serializedAuthPath.copy(input, 6 * FR_SIZE);
 
-		console.time('prover');
+		if (this._logTime) {
+			console.time('prover');
+		}
 		const proof = this.circuit.generate_proof(input);
-		console.timeEnd('prover');
-
-		// Public inputs
-		// root, epoch, share_x, share_y, nullifier
-
-		// const publicInputs = Buffer.alloc(FR_SIZE * 5);
-
-		// FR.toRprLE(publicInputs, 0 * FR_SIZE, _root);
-		// FR.toRprLE(publicInputs, 1 * FR_SIZE, _epoch);
-		// FR.toRprLE(publicInputs, 2 * FR_SIZE, x);
-		// FR.toRprLE(publicInputs, 3 * FR_SIZE, y);
-		// FR.toRprLE(publicInputs, 4 * FR_SIZE, nullifier);
+		if (this._logTime) {
+			console.timeEnd('prover');
+		}
 
 		return RLNOut.new(proof, _root, _epoch, x, y, nullifier);
 	}
