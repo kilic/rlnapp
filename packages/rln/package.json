@@ -4,10 +4,14 @@
   "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
+  "files": [
+    "test_parameters/*"
+  ],
   "scripts": {
     "clear": "rm -rf lib",
     "build": "yarn clear && tsc -b",
-    "test": "tsc -b && mocha -r ts-node/register lib/test//*.js"
+    "test": "tsc -b && mocha -r ts-node/register lib/test//*.js",
+    "export_test_params": "ts-node scripts/export_test_params.ts"
   },
   "dependencies": {
     "@rln/circuit": "0.1.0",
@@ -23,6 +27,7 @@
     "chai": "^4.2.0",
     "mocha": "^8.2.0",
     "prettier": "^2.1.2",
+    "ts-node": "^9.0.0",
     "typescript": "^4.0.5"
   }
 }

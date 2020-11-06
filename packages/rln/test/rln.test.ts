@@ -6,11 +6,20 @@ import * as chai from 'chai';
 import { newPoseidonHasher } from '@rln/tree';
 const assert = chai.assert;
 
-const DEPTH = 3;
+const DEPTH = 4;
 const hasher = newPoseidonHasher({});
 
 function randAddress(): string {
 	return ethers.utils.getAddress(ethers.utils.hexlify(ethers.utils.randomBytes(20)));
+}
+
+function initRLN(depth) {
+	var fs = require('fs');
+	var path = require('path');
+	const dir = path.join(__dirname, `../../test_parameters/circuit_${depth}.params`);
+	const parameters = fs.readFileSync(dir);
+	const rln = RLN.restore(depth, parameters);
+	return rln;
 }
 
 describe('rln circuit bindings', function () {
@@ -21,8 +30,7 @@ describe('rln circuit bindings', function () {
 	const memberIndex = 2;
 	const memberKey = '0xff';
 	before(async () => {
-		rln = await RLN.new(DEPTH);
-
+		rln = initRLN(4);
 		tree = Tree.new(DEPTH, hasher);
 		assert.equal(0, tree.insertSingle(memberIndex, memberKey));
 	});
