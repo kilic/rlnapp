@@ -1,4 +1,4 @@
-import { RLNWasm } from '@rln/circuit';
+import { RLNWasm } from 'rln-wasm';
 import { Tree, Hasher } from '@rln/tree';
 import { newPoseidonHasher, newKeccakHasher } from '@rln/tree';
 import * as ethers from 'ethers';
@@ -162,7 +162,7 @@ export class RLN {
 	}
 
 	public verifyingKey(): Uint8Array {
-		return this.circuit.verifier_key();
+		return this.circuit.export_verifier_key();
 	}
 
 	public verify(proof: Uint8Array, inputs: Uint8Array): boolean {
