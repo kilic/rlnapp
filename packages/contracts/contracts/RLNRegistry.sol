@@ -16,12 +16,12 @@ contract RLNRegistry is AccountTree {
 	}
 
 	function registerSingle(uint256 newMember) external payable returns (uint256) {
-		require(msg.value == membershipFee, 'RLNRegsitry: fee is not sufficient');
+		require(msg.value == membershipFee, 'RLNRegsitry registerSingle: fee is not sufficient');
 		return _updateSingle(newMember);
 	}
 
 	function registerBatch(uint256[] memory newMembers) external payable returns (uint256) {
-		require(msg.value == membershipFee * newMembers.length, 'RLNRegsitry: fee is not sufficient');
+		require(msg.value == membershipFee * newMembers.length, 'RLNRegsitry registerBatch: fee is not sufficient');
 		return _updateBatch(newMembers);
 	}
 

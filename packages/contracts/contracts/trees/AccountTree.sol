@@ -49,7 +49,7 @@ contract AccountTree is PoseidonHasher {
 	}
 
 	function _updateSingle(uint256 leaf) internal returns (uint256) {
-		require(leafIndexLeft < SET_SIZE() - 1, 'PoseidonTree updateSingle: left set is full');
+		require(leafIndexLeft < SET_SIZE() - 1, 'AccountTree updateSingle: left set is full');
 		uint256 acc = leaf;
 		uint256 path = leafIndexLeft;
 		bool subtreeSet = false;
@@ -74,7 +74,7 @@ contract AccountTree is PoseidonHasher {
 
 	function _updateBatch(uint256[] memory leafs) internal returns (uint256) {
 		require(leafs.length == BATCH_SIZE(), 'AccountTree updateBatch: number of leafs');
-		require(leafIndexRight < SET_SIZE() - 1 - BATCH_SIZE(), 'PoseidonTree updateBatch: right set is full ');
+		require(leafIndexRight < SET_SIZE() - 1 - BATCH_SIZE(), 'AccountTree updateBatch: right set is full ');
 		// Fill the subtree
 		for (uint256 i = 0; i < BATCH_DEPTH; i++) {
 			uint256 n = (BATCH_DEPTH - i - 1);

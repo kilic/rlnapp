@@ -110,7 +110,7 @@ contract RLNInventivized {
 		require(rewards[_rewardID] == REWARD_STATUS.Submitted, 'RLNInventivized claimReward: reward claim is not submitted or is processed');
 
 		// check nullifier inclusion
-		require(nullifierWitness.length != 0, 'Reward claim: missing witness');
+		require(nullifierWitness.length != 0, 'RLNInventivized claimReward: missing witness');
 		require((1 << nullifierWitness.length) >= numberOfMessages && (1 << (nullifierWitness.length - 1)) < numberOfMessages, 'RLNInventivized claimReward: bad witness size');
 		require(RLNKeccakMerkleUtils.checkInclusion(messageRoot, bytes32(signal.nullifier), nullifierIndex, nullifierWitness), 'RLNInventivized claimReward: nullifier is not included');
 
@@ -126,10 +126,10 @@ contract RLNInventivized {
 		circuitInputs[3] = signal.shareY;
 		circuitInputs[4] = signal.nullifier;
 
-		require(Snark.verify(rlnVerifyingKey, circuitInputs, rlnProof), 'Reward claim: signal verification failed');
+		require(Snark.verify(rlnVerifyingKey, circuitInputs, rlnProof), 'RLNInventivized claimReward: signal verification failed');
 
 		// check if nullifier hits the target
-		require(verifyProofOfMessage(_rewardEpoch, signal.nullifier, numberOfMessages), 'Reward claim: proof of message failed');
+		require(verifyProofOfMessage(_rewardEpoch, signal.nullifier, numberOfMessages), 'RLNInventivized claimReward: proof of message failed');
 
 		// process reward witdrawal
 		applyReward(msg.sender, numberOfMessages);

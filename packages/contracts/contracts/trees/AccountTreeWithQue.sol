@@ -82,10 +82,10 @@ contract AccountTreeWithQue is PoseidonHasher {
 	uint256 public mergeOffsetLower = 0;
 
 	constructor(uint256 minlevel) public {
-		require(identity() == ZEROS[0], 'PoseidonTree: incompatible hasher');
-		require(DEPTH == filledSubtrees.length, 'PoseidonTree: bad tree construction');
-		require(DEPTH == ZEROS.length, 'PoseidonTree: bad tree construction');
-		require(minlevel < DEPTH - 1, 'PoseidonTree: large subtree depth');
+		require(identity() == ZEROS[0], 'AccountTreeWithQue constructor: incompatible hasher');
+		require(DEPTH == filledSubtrees.length, 'AccountTreeWithQue constructor: bad tree construction');
+		require(DEPTH == ZEROS.length, 'AccountTreeWithQue constructor: bad tree construction');
+		require(minlevel < DEPTH - 1, 'AccountTreeWithQue constructor: large subtree depth');
 		MIN_SUBPoseidonTree_DEPTH = minlevel;
 		root = ZEROS[DEPTH - 1];
 	}
@@ -103,15 +103,15 @@ contract AccountTreeWithQue is PoseidonHasher {
 	}
 
 	function merge(uint256 level) internal {
-		require(level >= MIN_SUBPoseidonTree_DEPTH && level < DEPTH - 1, 'PoseidonTree: subtree depth too low');
+		require(level >= MIN_SUBPoseidonTree_DEPTH && level < DEPTH - 1, 'AccountTreeWithQue merge: subtree depth too low');
 
 		uint256 mergeSize = 1 << level;
 		uint256 mergeOffsetUpper = mergeOffsetLower + mergeSize;
 		uint256 path = mergeOffsetLower >> level;
 
 		// Check whether valid merge request
-		require(leafIndex - mergeOffsetLower >= mergeSize, 'PoseidonTree: subtree set size must be lower or equal than que size');
-		require((mergeOffsetUpper - 1) >> level == path, 'PoseidonTree: cannot construct subtree');
+		require(leafIndex - mergeOffsetLower >= mergeSize, 'AccountTreeWithQue merge: subtree set size must be lower or equal than que size');
+		require((mergeOffsetUpper - 1) >> level == path, 'AccountTreeWithQue merge: cannot construct subtree');
 
 		uint256[] memory buf = new uint256[](mergeSize / 2);
 
