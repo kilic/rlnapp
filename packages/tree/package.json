@@ -7,7 +7,7 @@
   "types": "lib/src/index.d.ts",
   "scripts": {
     "clear": "rm -rf lib",
-    "build": "yarn clear && tsc -b",
+    "build": "yarn clear && yarn generate_contract_wrappers && tsc -b",
     "test": "tsc -b && mocha -r ts-node/register lib/test//*.js --exit",
     "generate_contract_wrappers": "typechain --target ethers-v4 --outDir src/generated_contract_wrappers/ ../contracts/build/contracts/RLN.json"
   },

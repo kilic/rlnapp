@@ -4,7 +4,8 @@
   "description": "RLN membership contracts",
   "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
   "scripts": {
-    "compile": "truffle compile",
+    "build": "yarn compile",
+    "compile": "truffle compile --all",
     "ganache": "ganache-cli -d -l 10000000",
     "test": "truffle test"
   },

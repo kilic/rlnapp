@@ -5,6 +5,7 @@
   "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
   "main": "index.js",
   "scripts": {
+    "build": "echo 'not a ts package'",
     "test": "mocha test"
   },
   "dependencies": {
