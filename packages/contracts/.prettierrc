@@ -6,7 +6,7 @@
         "printWidth": 540,
         "tabWidth": 2,
         "useTabs": true,
-        "singleQuote": true,
+        "singleQuote": false,
         "bracketSpacing": true,
         "explicitTypes": "always",
         "trailingComma": "none"
@@ -18,7 +18,7 @@
         "printWidth": 320,
         "tabWidth": 4,
         "useTabs": true,
-        "singleQuote": true,
+        "singleQuote": false,
         "bracketSpacing": true,
         "explicitTypes": "always",
         "trailingComma": "none"

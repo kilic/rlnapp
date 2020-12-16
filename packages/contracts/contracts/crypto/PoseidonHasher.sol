@@ -1,7 +1,12 @@
 pragma solidity 0.7.4;
 
+interface IPoseidonHasher {
+	function hash(uint256[2] memory input) external pure returns (uint256 result);
 
-contract PoseidonHasher {
+	function identity() external pure returns (uint256);
+}
+
+contract PoseidonHasher is IPoseidonHasher {
 	uint256 constant Q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 	uint256 constant C0 = 2768970367241139781802170833007148522174069744848643939234067191877771423371;
 	uint256 constant C1 = 6468574107656347268529237497718336587709069456280471580424455063721832719771;
@@ -76,7 +81,11 @@ contract PoseidonHasher {
 	uint256 constant M7 = 10778490508693548114587990025762035374898560218037495485187480124708600063292;
 	uint256 constant M8 = 13853145901042782779715203529626320031162484246107565810821674712070680357632;
 
-	function hash(uint256[2] memory input) internal pure returns (uint256 result) {
+	function hash(uint256[2] memory input) external pure override returns (uint256 result) {
+		return _hash(input);
+	}
+
+	function _hash(uint256[2] memory input) internal pure returns (uint256 result) {
 		assembly {
 			let q := Q
 			let pos := mload(0x40)
@@ -514,7 +523,11 @@ contract PoseidonHasher {
 		}
 	}
 
-	function identity() public pure returns (uint256) {
+	function identity() external pure override returns (uint256) {
+		return _identity();
+	}
+
+	function _identity() internal pure returns (uint256) {
 		return 0x2ff267fd23782a5625e6d804f0a7fa700b8dc6084e2e7a5aff7cd4b1c506d30b;
 	}
 }
