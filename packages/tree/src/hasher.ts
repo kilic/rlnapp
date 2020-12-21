@@ -41,4 +41,36 @@ export class Hasher {
 		}
 		return zeros;
 	}
+
+	public calculateRootFromWitness(index: number, witness: Array<Node>, leaf?: Node) {
+		if (!leaf) leaf = ZERO;
+		let path = index;
+		let depth = witness.length;
+		let acc = leaf;
+		for (let i = 0; i < depth; i++) {
+			if ((path & 1) == 1) {
+				acc = this.hash2(witness[i], acc);
+			} else {
+				acc = this.hash2(acc, witness[i]);
+			}
+			path >>= 1;
+		}
+		return acc;
+	}
+
+	public calculateRootFromLeaves(depth: number, leafs: Array<Node>) {
+		if (1 << depth != leafs.length) {
+			throw new Error('leaf length and depth mismatch');
+		}
+		let buf = Array(leafs.length >> 1).fill(ZERO);
+
+		for (let i = 0; i < depth; i++) {
+			const n = depth - i - 1;
+			for (let j = 0; j < 1 << n; j++) {
+				const k = j << 1;
+				buf[j] = this.hash2(buf[k], buf[k + 1]);
+			}
+		}
+		return buf[0];
+	}
 }

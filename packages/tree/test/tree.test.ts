@@ -110,26 +110,3 @@ describe('Merkle Tree with Keccak Hasher', function () {
 		witnessBatchMerge(hasher);
 	});
 });
-
-
-// function insertSingle(hasher: Hasher) {
-// 	const tree3 = Tree.new(3, hasher);
-// 	assert.equal(0, tree3.insertSingle(5, '0x01'));
-// 	assert.equal(0, tree3.insertSingle(6, '0x02'));
-// 	assert.equal(tree3.root, '0x170990af0d57e5ac9161ede7b278c743925bcbb51a1252907a290432cb5bf502');
-// 	const tree32 = Tree.new(32, hasher);
-// 	assert.equal(0, tree32.insertSingle(5, '0x01'));
-// 	assert.equal(0, tree32.insertSingle(6, '0x02'));
-// 	assert.equal(tree32.root, '0x2efd616a1e172e5700aa002b9b41fa3ebe04f61506aa7fff952b1e37ffec12ff');
-// }
-
-// function updateSingle(hasher: Hasher) {
-// 	const tree3 = Tree.new(3, hasher);
-// 	assert.equal(0, tree3.updateSingle(5, hasher.hash('0x01')));
-// 	assert.equal(0, tree3.updateSingle(6, hasher.hash('0x02')));
-// 	assert.equal(tree3.root, '0x170990af0d57e5ac9161ede7b278c743925bcbb51a1252907a290432cb5bf502');
-// 	const tree32 = Tree.new(32, hasher);
-// 	assert.equal(0, tree32.updateSingle(5, hasher.hash('0x01')));
-// 	assert.equal(0, tree32.updateSingle(6, hasher.hash('0x02')));
-// 	assert.equal(tree32.root, '0x2efd616a1e172e5700aa002b9b41fa3ebe04f61506aa7fff952b1e37ffec12ff');
-// }
