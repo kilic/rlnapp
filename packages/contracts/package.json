@@ -3,18 +3,28 @@
   "version": "0.1.0",
   "description": "RLN membership contracts",
   "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
+  "types": "wrappers/index.d.ts",
   "scripts": {
-    "build": "yarn compile",
-    "compile": "truffle compile --all",
-    "ganache": "ganache-cli -d -l 10000000",
-    "test": "truffle test"
+    "build": "yarn generate",
+    "generate": "yarn compile && yarn typechain && yarn build:wrappers",
+    "compile": "hardhat compile",
+    "typechain": "rm -rf generated && typechain --target ethers-v5 --outDir wrappers './artifacts/contracts/**/!(*.dbg).json'",
+    "build:wrappers": "npx tsc -b",
+    "test": "hardhat test"
   },
   "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@openzeppelin/test-helpers": "^0.5.5",
-    "@rln/tree": "0.1.0",
     "@rln/rln": "0.1.0",
+    "@rln/tree": "0.1.0",
+    "@typechain/ethers-v5": "^5.0.0",
     "chai": "^4.2.0",
+    "ethers": "^5.0.24",
+    "hardhat": "^2.0.6",
     "prettier": "^2.0.4",
-    "prettier-plugin-solidity": "^1.0.0-alpha.42"
+    "prettier-plugin-solidity": "^1.0.0-alpha.42",
+    "ts-node": "^9.1.1",
+    "typechain": "^4.0.1",
+    "typescript": "^4.1.3"
   }
 }

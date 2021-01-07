@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    "outDir": "lib/",
+    "rootDir": ".",
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "lib/",
+    "noImplicitAny": false,
+    "emitDeclarationOnly": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "lib"]
+}

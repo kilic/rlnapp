@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    "outDir": "lib/",
+    "rootDir": "wrappers",
+    "declaration": true,
+    "declarationDir": "lib/",
+    "noImplicitAny": false
+  },
+  "include": ["./wrappers/**/*.ts"],
+  "exclude": ["node_modules", "lib"]
+}
