@@ -9,6 +9,6 @@ For details, see work in progress document [here](https://hackmd.io/tMTLMYmTR5ey
 ```sh
 > yarn install
 > yarn build
-> yarn ganache
+> yarn eth-network
 > yarn test
 ```

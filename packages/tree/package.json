@@ -6,8 +6,12 @@
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "scripts": {
-    "clear": "rm -rf lib",
-    "build": "yarn clear && tsc -b",
+    "build": "yarn build:ts && yarn generate_contract_wrappers",
+    "clear:ts": "rm -rf lib",
+    "build:ts": "yarn clear:ts && tsc -b",
+    "generate_contract_wrappers": "yarn generate_contract_wrappers:clear && yarn generate_contract_wrappers:typechain",
+    "generate_contract_wrappers:clear": "rm -rf src/contracts",
+    "generate_contract_wrappers:typechain": "typechain --target ethers-v5 --outDir src/contracts '../contracts/artifacts/contracts/**/?(RLN|PoseidonHasher).json'",
     "test": "tsc -b && mocha -r ts-node/register lib/test//*.js --exit"
   },
   "dependencies": {
@@ -16,13 +20,14 @@
     "ffjavascript": "^0.2.32"
   },
   "devDependencies": {
+    "@typechain/ethers-v5": "^5.0.0",
     "@types/chai": "^4.2.11",
     "@types/mocha": "^7.0.2",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "mocha": "^7.1.2",
     "ts-node": "^8.10.2",
-    "typechain": "^2.0.0",
+    "typechain": "^4.0.1",
     "typescript": "^3.8.3"
   }
 }

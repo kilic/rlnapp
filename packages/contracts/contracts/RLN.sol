@@ -10,7 +10,7 @@ contract RLN {
 	uint256 public pubkeyIndex = 0;
 	mapping(uint256 => uint256) public members;
 
-	IPoseidonHasher poseidon;
+	IPoseidonHasher public poseidonHasher;
 
 	event MemberRegistered(uint256 indexed pubkey, uint256 indexed index);
 	event MemberWithdrawn(uint256 indexed pubkey, uint256 indexed index);
@@ -18,12 +18,12 @@ contract RLN {
 	constructor(
 		uint256 membershipDeposit,
 		uint256 depth,
-		address poseidonHasher
+		address _poseidonHasher
 	) public {
 		MEMBERSHIP_DEPOSIT = membershipDeposit;
 		DEPTH = depth;
 		SET_SIZE = 1 << depth;
-		poseidon = IPoseidonHasher(poseidonHasher);
+		poseidonHasher = IPoseidonHasher(_poseidonHasher);
 	}
 
 	function register(uint256 pubkey) external payable {
@@ -91,6 +91,6 @@ contract RLN {
 	}
 
 	function hash(uint256[2] memory input) internal view returns (uint256) {
-		return poseidon.hash(input);
+		return poseidonHasher.hash(input);
 	}
 }
