@@ -7,17 +7,15 @@
   "types": "lib/src/index.d.ts",
   "scripts": {
     "clear": "rm -rf lib",
-    "build": "yarn clear && yarn generate_contract_wrappers && tsc -b",
-    "test": "tsc -b && mocha -r ts-node/register lib/test//*.js --exit",
-    "generate_contract_wrappers": "typechain --target ethers-v4 --outDir src/generated_contract_wrappers/ ../contracts/build/contracts/RLN.json"
+    "build": "yarn clear && tsc -b",
+    "test": "tsc -b && mocha -r ts-node/register lib/test//*.js --exit"
   },
   "dependencies": {
     "@rln/poseidon": "0.1.0",
-    "ethers": "^4.0.47",
+    "ethers": "^5.0.24",
     "ffjavascript": "^0.2.32"
   },
   "devDependencies": {
-    "@typechain/ethers-v4": "^1.0.0",
     "@types/chai": "^4.2.11",
     "@types/mocha": "^7.0.2",
     "chai": "^4.2.0",
