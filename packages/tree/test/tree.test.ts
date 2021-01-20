@@ -14,10 +14,10 @@ function insertBatch(hasher: Hasher) {
 			const data = Array<Data>(len)
 				.fill('0')
 				.map((_, i) => i.toString());
-			assert.equal(0, tree.insertBatch(offset, data), `${k}, ${j}`);
+			tree.insertBatch(offset, data);
 			const otherTree = Tree.new(depth, hasher);
 			for (let i = 0; i < data.length; i++) {
-				assert.equal(0, otherTree.insertSingle(offset + i, data[i]));
+				otherTree.insertSingle(offset + i, data[i]);
 			}
 			assert.equal(tree.root, otherTree.root);
 		}
@@ -31,7 +31,7 @@ function updateBatch(hasher: Hasher) {
 	const offset = 0;
 	const data = Array<Data>(len).fill('0');
 	const root0 = tree.root;
-	assert.equal(0, tree.updateBatch(offset, data));
+	tree.updateBatch(offset, data);
 	assert.equal(tree.root, root0);
 }
 
@@ -39,23 +39,22 @@ function witness(hasher: Hasher) {
 	const depth = 4;
 	const tree = Tree.new(depth, hasher);
 	const witness: Witness = {
-		path: [false, false, false, false],
 		nodes: tree.zeros.slice(1).reverse(),
 		leaf: '0x00',
 		index: 1
 	};
-	assert.equal(0, tree.checkInclusion(witness));
+	assert.isTrue(tree.checkInclusion(witness));
 	witness.leaf = '0x01';
-	assert.equal(-1, tree.checkInclusion(witness));
+	assert.isFalse(tree.checkInclusion(witness));
 	const data = Array<Data>(tree.setSize)
 		.fill('0')
 		.map((_, i) => (i + 1).toString());
-	assert.equal(0, tree.updateBatch(0, data));
+	tree.updateBatch(0, data);
 	for (let i = 0; i < tree.setSize; i++) {
 		const witness = tree.witness(i);
-		assert.equal(0, tree.checkInclusion(witness));
+		assert.isTrue(tree.checkInclusion(witness));
 		witness.leaf = '0x00';
-		assert.equal(-1, tree.checkInclusion(witness));
+		assert.isFalse(tree.checkInclusion(witness));
 	}
 }
 
@@ -63,19 +62,19 @@ function witnessBatchMerge(hasher: Hasher) {
 	const depth = 8;
 	const tree = Tree.new(depth, hasher);
 	let witness = tree.witnessForBatch(0, 2);
-	assert.equal(0, tree.checkInclusion(witness));
+	assert.isTrue(tree.checkInclusion(witness));
 	let data = Array<Data>(64)
 		.fill('0')
 		.map((_, i) => (i + 1).toString());
-	assert.equal(0, tree.updateBatch(0, data));
+	tree.updateBatch(0, data);
 	witness = tree.witnessForBatch(0, 6);
-	assert.equal(0, tree.checkInclusion(witness));
+	assert.isTrue(tree.checkInclusion(witness));
 	data = Array<Data>(16)
 		.fill('0')
 		.map((_, i) => (i + 1).toString());
-	assert.equal(0, tree.updateBatch(64, data));
+	tree.updateBatch(64, data);
 	witness = tree.witnessForBatch(64, 4);
-	assert.equal(0, tree.checkInclusion(witness));
+	assert.isTrue(tree.checkInclusion(witness));
 }
 
 describe('Merkle Tree with Poseidon Hasher', function () {
