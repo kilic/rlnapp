@@ -8,9 +8,13 @@ export type Witness = {
 	nodes: Array<Node>;
 	leaf: Node;
 	index: number;
-	data?: Data;
 	depth?: number;
 };
+
+const ErrBadAlignment = new Error('bad merge alignment');
+const ErrLengthMismatch = new Error('depth witness mismatch');
+const ErrIndexExceeds = new Error('index exceeds');
+const ErrZeroLength = new Error('zero lenght');
 
 export class Tree {
 	public readonly zeros: Array<Node>;
@@ -52,7 +56,7 @@ export class Tree {
 		const mergeOffsetUpper = mergeOffsetLower + mergeSize;
 		const pathFollower = mergeOffsetLower >> subtreeDepth;
 		if (mergeOffsetLower >> subtreeDepth != (mergeOffsetUpper - 1) >> subtreeDepth) {
-			throw new Error('bad merge alignment');
+			throw ErrBadAlignment;
 		}
 		return this.witness(pathFollower, this.depth - subtreeDepth);
 	}
@@ -72,20 +76,16 @@ export class Tree {
 
 	// checkInclusion verifies the given witness.
 	// It performs root calculation rather than just looking up for the leaf or node
-	public checkInclusion(witness: Witness): Success {
+	public checkInclusion(witness: Witness): boolean {
 		// we check the form of witness data rather than looking up for the leaf
-		if (witness.nodes.length == 0) return -2;
-		const data = witness.data;
-		let path = witness.index;
-		if (data) {
-			if (witness.nodes.length != this.depth) return -4;
-			if (this.hasher.hash(data) != witness.leaf) return -5;
-		}
-		let depth = witness.depth;
-		if (!depth) {
-			depth = this.depth;
-		}
+
+		const depth = witness.depth ? witness.depth : this.depth;
+
+		if (depth == 0) throw ErrZeroLength;
+		if (witness.nodes.length != depth) throw ErrLengthMismatch;
+
 		let acc = witness.leaf;
+		let path = witness.index;
 		for (let i = 0; i < depth; i++) {
 			const node = witness.nodes[i];
 			if ((path & 1) == 1) {
@@ -95,51 +95,47 @@ export class Tree {
 			}
 			path >>= 1;
 		}
-		return acc == this.root ? 0 : -1;
+		return acc == this.root;
 	}
 
 	// insertSingle updates tree with a single raw data at given index
-	public insertSingle(leafIndex: number, data: Data): Success {
+	public insertSingle(leafIndex: number, data: Data) {
 		if (leafIndex >= this.setSize) {
-			return -1;
+			throw ErrIndexExceeds;
 		}
 		this.tree[this.depth][leafIndex] = this.hasher.hash(data);
 		this.ascend(leafIndex, 1);
-		return 0;
 	}
 
 	// updateSingle updates tree with a leaf at given index
-	public updateSingle(leafIndex: number, leaf: Node): Success {
+	public updateSingle(leafIndex: number, leaf: Node) {
 		if (leafIndex >= this.setSize) {
-			return -1;
+			throw ErrIndexExceeds;
 		}
 		this.tree[this.depth][leafIndex] = leaf;
 		this.ascend(leafIndex, 1);
-		return 0;
 	}
 
 	// insertBatch given multiple raw data updates tree ascending from an offset
-	public insertBatch(offset: number, data: Array<Data>): Success {
+	public insertBatch(offset: number, data: Array<Data>) {
 		const len = data.length;
-		if (len == 0) return -1;
-		if (len + offset > this.setSize) return -2;
+		if (len == 0) throw ErrZeroLength;
+		if (len + offset > this.setSize) throw ErrIndexExceeds;
 		for (let i = 0; i < len; i++) {
 			this.tree[this.depth][offset + i] = this.hasher.hash(data[i]);
 		}
 		this.ascend(offset, len);
-		return 0;
 	}
 
 	// updateBatch given multiple sequencial data updates tree ascending from an offset
-	public updateBatch(offset: number, data: Array<Node>): Success {
+	public updateBatch(offset: number, data: Array<Node>) {
 		const len = data.length;
-		if (len == 0) return -1;
-		if (len + offset > this.setSize) return -2;
+		if (len == 0) throw ErrZeroLength;
+		if (len + offset > this.setSize) ErrIndexExceeds;
 		for (let i = 0; i < len; i++) {
 			this.tree[this.depth][offset + i] = data[i];
 		}
 		this.ascend(offset, len);
-		return 0;
 	}
 
 	private ascend(offset: number, len: number) {
