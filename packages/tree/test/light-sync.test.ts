@@ -31,12 +31,12 @@ describe('Ligth merkle tree sync', function () {
 		// initilize an empty synconizer
 		const sync = LightSyncFS.new(hasher, depth, currentIndex, filledSubtrees, leafs[memberIndex], memberIndex, authPath);
 		for (let i = 0; i < 6; i++) {
-			assert.equal(0, referenceTree.updateSingle(i, leafs[i]));
+			referenceTree.updateSingle(i, leafs[i]);
 			sync.incrementalUpdate(leafs[i]);
 			assert.equal(referenceTree.root, sync.root);
 			if (sync.inSync) {
 				const witness = sync.witness();
-				assert.equal(0, referenceTree.checkInclusion(witness));
+				referenceTree.checkInclusion(witness);
 			}
 		}
 	});
