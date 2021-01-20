@@ -129,9 +129,11 @@ export class LightSyncFS {
 						throw ErrorIrrelevantWitness;
 					}
 					merged = true;
+					console.log('hererrr', i);
 					this.authPath[i] = accWitness;
 				} else {
 					if (this.authPath[i] != witness[i] && this.inSync) {
+						console.log('yyy', this.authPath[i], witness[i]);
 						throw ErrorIrrelevantWitness;
 					}
 				}
