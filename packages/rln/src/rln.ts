@@ -189,16 +189,18 @@ export class RLN {
 		assert(poseidonHasher.hash(key) == tree.getLeaf(memberIndex));
 
 		const witness = tree.witness(memberIndex);
-		const witnessLength = witness.path.length;
+		const witnessLength = witness.nodes.length;
 		let serializedAuthPath = Buffer.alloc(1 + witnessLength * (FR_SIZE + 1));
 		const buf = Buffer.alloc(FR_SIZE);
 		serializedAuthPath.writeUInt8(witnessLength);
+		let path = witness.index;
 		for (let i = 0; i < witnessLength; i++) {
 			const offsetDirection = 1 + i * (FR_SIZE + 1);
-			serializedAuthPath.writeUInt8(witness.path[i] ? 0x01 : 0x00, offsetDirection);
+			serializedAuthPath.writeUInt8((path & 1) == 1 ? 0x00 : 0x01, offsetDirection);
 			FR.toRprLE(buf, 0, FR.e(witness.nodes[i]));
 			const offsetNode = offsetDirection + 1;
 			buf.copy(serializedAuthPath, offsetNode);
+			path >>= 1;
 		}
 
 		// RLN inputs

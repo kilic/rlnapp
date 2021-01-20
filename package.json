@@ -5,10 +5,14 @@
   "author": "Onur Kılıç <kiliconu@itu.edu.tr>",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/poseidon",
+    "packages/contracts",
+    "packages/tree",
+    "packages/rln"
   ],
   "scripts": {
     "build": "yarn workspaces run build",
+    "clean": "yarn workspaces run clean",
     "test": "yarn workspaces run test",
     "eth-network": "yarn workspace @rln/contracts network"
   }
