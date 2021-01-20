@@ -39,7 +39,6 @@ function witness(hasher: Hasher) {
 	const depth = 4;
 	const tree = Tree.new(depth, hasher);
 	const witness: Witness = {
-		path: [false, false, false, false],
 		nodes: tree.zeros.slice(1).reverse(),
 		leaf: '0x00',
 		index: 1

@@ -5,7 +5,6 @@ export type Data = string;
 export type Success = number;
 
 export type Witness = {
-	path: Array<boolean>;
 	nodes: Array<Node>;
 	leaf: Node;
 	index: number;
@@ -60,17 +59,15 @@ export class Tree {
 
 	// witness given index and depth constructs a witness
 	public witness(index: number, depth: number = this.depth): Witness {
-		const path = Array<boolean>(depth);
 		const nodes = Array<Node>(depth);
 		let nodeIndex = index;
 		const leaf = this.getNode(depth, nodeIndex);
 		for (let i = 0; i < depth; i++) {
 			nodeIndex ^= 1;
 			nodes[i] = this.getNode(depth - i, nodeIndex);
-			path[i] = (nodeIndex & 1) == 1;
 			nodeIndex >>= 1;
 		}
-		return { path, nodes, leaf, index, depth };
+		return { nodes, leaf, index, depth };
 	}
 
 	// checkInclusion verifies the given witness.
@@ -78,8 +75,8 @@ export class Tree {
 	public checkInclusion(witness: Witness): Success {
 		// we check the form of witness data rather than looking up for the leaf
 		if (witness.nodes.length == 0) return -2;
-		if (witness.nodes.length != witness.path.length) return -3;
 		const data = witness.data;
+		let path = witness.index;
 		if (data) {
 			if (witness.nodes.length != this.depth) return -4;
 			if (this.hasher.hash(data) != witness.leaf) return -5;
@@ -91,11 +88,12 @@ export class Tree {
 		let acc = witness.leaf;
 		for (let i = 0; i < depth; i++) {
 			const node = witness.nodes[i];
-			if (witness.path[i]) {
-				acc = this.hasher.hash2(acc, node);
-			} else {
+			if ((path & 1) == 1) {
 				acc = this.hasher.hash2(node, acc);
+			} else {
+				acc = this.hasher.hash2(acc, node);
 			}
+			path >>= 1;
 		}
 		return acc == this.root ? 0 : -1;
 	}
@@ -168,6 +166,7 @@ export class Tree {
 
 	private hashCouple(level: number, leafIndex: number) {
 		const X = this.getCouple(level, leafIndex);
+		// console.log('t', X.l, X.r);
 		return this.hasher.hash2(X.l, X.r);
 	}
 
