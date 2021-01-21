@@ -32,7 +32,7 @@ describe('rln circuit bindings', function () {
 	before(async () => {
 		rln = initRLN(4);
 		tree = Tree.new(DEPTH, hasher);
-		assert.equal(0, tree.insertSingle(memberIndex, memberKey));
+		tree.insertSingle(memberIndex, memberKey);
 	});
 	it('generate and verify proof', () => {
 		const epoch = 100;

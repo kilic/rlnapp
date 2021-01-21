@@ -9,9 +9,10 @@
     "generate": "yarn compile && yarn typechain && yarn build:wrappers",
     "compile": "hardhat compile",
     "typechain": "rm -rf generated && typechain --target ethers-v5 --outDir wrappers './artifacts/contracts/**/!(*.dbg).json'",
-    "build:wrappers": "npx tsc -b",
+    "build:wrappers": "npx tsc -p tsconfig.wrappers.json",
     "test": "hardhat test",
-    "network": "hardhat node"
+    "network": "hardhat node",
+    "clean": "hardhat clean && rm -rf generated"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",

@@ -8,8 +8,8 @@
     "test_parameters/*"
   ],
   "scripts": {
-    "clear": "rm -rf lib",
-    "build": "yarn clear && tsc -b",
+    "clean": "rm -rf lib",
+    "build": "yarn clean && tsc -b",
     "test": "tsc -b && mocha -r ts-node/register lib/test//*.js",
     "export_test_params": "ts-node scripts/export_test_params.ts"
   },

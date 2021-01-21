@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "build": "echo 'not a ts package'",
-    "test": "mocha test"
+    "test": "mocha test",
+    "clean": "echo 'nothing to clear'"
   },
   "dependencies": {
     "blakejs": "^1.1.0",
