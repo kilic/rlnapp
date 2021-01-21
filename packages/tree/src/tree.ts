@@ -50,6 +50,21 @@ export class Tree {
 		return this.tree[this.depth][index] || this.zeros[this.depth];
 	}
 
+	public getFilledSubtrees(index: number): Array<Node> {
+		const filledSubtrees: Array<Node> = [];
+		const placeholder: Node = '0';
+		let path = index;
+		for (let i = 0; i < this.depth; i++) {
+			if ((path & 1) == 1) {
+				filledSubtrees.push(this.getNode(this.depth - i, path - 1));
+			} else {
+				filledSubtrees.push(placeholder);
+			}
+			path >>= 1;
+		}
+		return filledSubtrees;
+	}
+
 	// witnessForBatch given merging subtree offset and depth constructs a witness
 	public witnessForBatch(mergeOffsetLower: number, subtreeDepth: number): Witness {
 		const mergeSize = 1 << subtreeDepth;
@@ -162,7 +177,6 @@ export class Tree {
 
 	private hashCouple(level: number, leafIndex: number) {
 		const X = this.getCouple(level, leafIndex);
-		// console.log('t', X.l, X.r);
 		return this.hasher.hash2(X.l, X.r);
 	}
 

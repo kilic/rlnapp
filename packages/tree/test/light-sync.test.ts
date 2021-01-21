@@ -1,12 +1,12 @@
 import * as chai from 'chai';
 import { ethers } from 'ethers';
-import { Tree, Data } from '../src';
+import { Tree, Data, newKeccakHasher } from '../src';
 import { LightSyncFS } from '../src/light-sync';
 import { newPoseidonHasher } from '../src/poseidon';
 const assert = chai.assert;
 
 function randLeaf(): Data {
-	return ethers.utils.hexlify(ethers.utils.randomBytes(20));
+	return ethers.utils.hexlify(ethers.utils.randomBytes(32));
 }
 
 function randLeafs(size: number): Array<Data> {
@@ -16,55 +16,109 @@ function randLeafs(size: number): Array<Data> {
 }
 
 describe('Ligth merkle tree sync', function () {
-	const POSEIDON_PARAMETERS = {}; // use default
-	const hasher = newPoseidonHasher(POSEIDON_PARAMETERS);
+	const hasher = newKeccakHasher();
 	const depth = 3;
 	const setSize = 1 << depth;
-	const emptyPath = Array<string>(depth).fill('0');
-	it('boot: current index = 0', () => {
-		const referenceTree = Tree.new(depth, hasher);
-		const leafs = randLeafs(setSize);
-		const currentIndex = 0;
-		const filledSubtrees = referenceTree.zeros.slice(1).reverse();
-		const authPath = emptyPath;
+	it('state index < member index', () => {
+		for (let n = 0; n < setSize; n++) {
+			const stateIndex = n;
+			// member index starts from state index,
+			// in the first case our member will be inserted first
+			for (let i = n; i < setSize; i++) {
+				// we will try to bootstrap from some offset that number is smaller than member index
+				const memberIndex = i;
+				// initialize reference tree
+				const referenceTree = Tree.new(depth, hasher);
+				// make up some leafs
+				const leafs = randLeafs(setSize);
+				// fill upto the state index
+				for (let j = 0; j < stateIndex; j++) {
+					referenceTree.updateSingle(j, leafs[j]);
+				}
+				// well, we have to find the hint in order to bootstap correctly
+				// the hint string is the filled subtrees
+				const filledSubtrees = referenceTree.getFilledSubtrees(stateIndex);
+				// initialize the syncronizer without an auth path
+				const sync = LightSyncFS.new(hasher, depth, stateIndex, filledSubtrees, leafs[memberIndex], memberIndex);
+				for (let j = stateIndex; j < setSize; j++) {
+					// reference tree is one step ahead
+					referenceTree.updateSingle(j, leafs[j]);
+					// update sycnronizer with new leaf
+					sync.incrementalUpdate(leafs[j]);
+					// expect that roots are met
+					assert.equal(referenceTree.root, sync.root);
 
-		// for (let i = 1; i < setSize; i++) {
-		const memberIndex = 0;
-		// console.log(i);
-		// initilize an empty synconizer
-		const sync = LightSyncFS.new(hasher, depth, currentIndex, filledSubtrees, leafs[memberIndex], memberIndex, authPath);
-		for (let j = 0; j < 1; j++) {
-			console.log('j', j);
-			referenceTree.updateSingle(j, leafs[j]);
-			sync.incrementalUpdate(leafs[j]);
-			// assert.equal(referenceTree.root, sync.root, `${i},${j}`);
-			assert.equal(referenceTree.root, sync.root);
-			if (sync.inSync) {
-				const witness = sync.witness();
-				referenceTree.checkInclusion(witness);
+					// update all leafs indexed below state index
+					const newLeafs = randLeafs(j);
+					for (let k = 0; k < j; k++) {
+						const newLeaf = newLeafs[k];
+						referenceTree.updateSingle(k, newLeaf);
+						const witness = referenceTree.witness(k).nodes;
+						sync.updateWithWitness(k, newLeaf, witness);
+						assert.equal(referenceTree.root, sync.root);
+					}
+
+					if (sync.inSync) {
+						// if state index goes beyond member index
+						// generate proof with light syncronization tool
+						// and verify the witness against the reference tree
+						const witness = sync.witness();
+						assert.isTrue(referenceTree.checkInclusion(witness));
+					}
+				}
 			}
 		}
-		// }
 	});
-	// it('boot: current index < leaf index', () => {
-	// 	const referenceTree = Tree.new(depth, hasher);
-	// 	const leafs = randLeafs(setSize);
-	// 	const memberIndex = 5;
-	// 	const currentIndex = 2;
 
-	// 	const filledSubtrees = referenceTree.zeros.slice(1).reverse();
+	it('state index >= member index', () => {
+		for (let n = 0; n < setSize; n++) {
+			const stateIndex = n;
+			for (let i = 0; i < stateIndex; i++) {
+				// we will try to bootstrap from some offset that number is smaller than member index
+				const memberIndex = i;
+				// initialize reference tree
+				const referenceTree = Tree.new(depth, hasher);
+				// make up some leafs
+				const leafs = randLeafs(setSize);
+				// fill upto the state index
+				for (let j = 0; j < stateIndex; j++) {
+					referenceTree.updateSingle(j, leafs[j]);
+				}
+				// well, we have to find the hint in order to bootstap correctly
+				// the hint string is the filled subtrees
+				const filledSubtrees = referenceTree.getFilledSubtrees(stateIndex);
+				// auth path can be given empty if state index < member index
+				const authPath = referenceTree.witness(memberIndex).nodes;
+				// initialize the syncronizer
+				const sync = LightSyncFS.new(hasher, depth, stateIndex, filledSubtrees, leafs[memberIndex], memberIndex, authPath);
 
-	// 	const authPath = emptyPath;
-	// 	// initilize an empty synconizer
-	// 	const sync = LightSyncFS.new(hasher, depth, currentIndex, filledSubtrees, leafs[memberIndex], memberIndex, authPath);
-	// 	for (let i = 0; i < 6; i++) {
-	// 		referenceTree.updateSingle(i, leafs[i]);
-	// 		sync.incrementalUpdate(leafs[i]);
-	// 		assert.equal(referenceTree.root, sync.root);
-	// 		if (sync.inSync) {
-	// 			const witness = sync.witness();
-	// 			referenceTree.checkInclusion(witness);
-	// 		}
-	// 	}
-	// });
+				for (let j = stateIndex; j < setSize; j++) {
+					// reference tree is one step ahead
+					referenceTree.updateSingle(j, leafs[j]);
+					// update sycnronizer with new leaf
+					sync.incrementalUpdate(leafs[j]);
+					// expect that roots are met
+					assert.equal(referenceTree.root, sync.root);
+
+					// update all leafs indexed below state index
+					const newLeafs = randLeafs(j);
+					for (let k = 0; k < j; k++) {
+						const newLeaf = newLeafs[k];
+						referenceTree.updateSingle(k, newLeaf);
+						const witness = referenceTree.witness(k).nodes;
+						sync.updateWithWitness(k, newLeaf, witness);
+						assert.equal(referenceTree.root, sync.root);
+					}
+
+					if (sync.inSync) {
+						// if state index goes beyond member index
+						// generate proof with light syncronization tool
+						// and verify the witness against the reference tree
+						const witness = sync.witness();
+						assert.isTrue(referenceTree.checkInclusion(witness));
+					}
+				}
+			}
+		}
+	});
 });
