@@ -50,6 +50,21 @@ export class Tree {
 		return this.tree[this.depth][index] || this.zeros[this.depth];
 	}
 
+	public getFilledSubtrees(index: number): Array<Node> {
+		const filledSubtrees: Array<Node> = [];
+		const placeholder: Node = '0';
+		let path = index;
+		for (let i = 0; i < this.depth; i++) {
+			if ((path & 1) == 1) {
+				filledSubtrees.push(this.getNode(this.depth - i, path - 1));
+			} else {
+				filledSubtrees.push(placeholder);
+			}
+			path >>= 1;
+		}
+		return filledSubtrees;
+	}
+
 	// witnessForBatch given merging subtree offset and depth constructs a witness
 	public witnessForBatch(mergeOffsetLower: number, subtreeDepth: number): Witness {
 		const mergeSize = 1 << subtreeDepth;
@@ -63,14 +78,12 @@ export class Tree {
 
 	// witness given index and depth constructs a witness
 	public witness(index: number, depth: number = this.depth): Witness {
-		const path = Array<boolean>(depth);
 		const nodes = Array<Node>(depth);
 		let nodeIndex = index;
 		const leaf = this.getNode(depth, nodeIndex);
 		for (let i = 0; i < depth; i++) {
 			nodeIndex ^= 1;
 			nodes[i] = this.getNode(depth - i, nodeIndex);
-			path[i] = (nodeIndex & 1) == 1;
 			nodeIndex >>= 1;
 		}
 		return { nodes, leaf, index, depth };
